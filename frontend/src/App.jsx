@@ -24,9 +24,11 @@ const KEY = 'xpecto_intro_seen';
 const routeToPage = (pathname) => {
   if (pathname === '/' || pathname.startsWith('/about')) return 'about';
   if (pathname.startsWith('/events')) return 'events';
+  if (pathname.startsWith('/mess')) return 'mess';
   if (pathname.startsWith('/workshops')) return 'workshops';
   if (pathname.startsWith('/sponsors')) return 'sponsors';
   if (pathname.startsWith('/team')) return 'team';
+  if (pathname.startsWith('/auth')) return 'auth';
   return 'home';
 };
 
