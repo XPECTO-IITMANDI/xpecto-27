@@ -9,10 +9,10 @@ const SCRAMBLE_DURATION = 300;
 const NAV_LINKS = [
   { path: '/', label: 'About' },
   { path: '/events', label: 'Events' },
-  { path: '/mess', label: 'Mess' },
   { path: '/workshops', label: 'Workshops' },
   { path: '/sponsors', label: 'Sponsors' },
   { path: '/team', label: 'Team' },
+  { path: '/campus-ambassador', label: 'Campus Ambassador' },
 ];
 
 /**
