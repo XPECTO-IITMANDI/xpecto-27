@@ -27,7 +27,10 @@ const routeToPage = (pathname) => {
   if (pathname.startsWith('/workshops')) return 'workshops';
   if (pathname.startsWith('/sponsors')) return 'sponsors';
   if (pathname.startsWith('/team')) return 'team';
-  if (pathname.startsWith('/campus-ambassador')) return 'team';
+  if (pathname.startsWith('/campus-ambassador')) return 'campus-ambassador';
+  if (pathname.startsWith('/me')) return 'me';
+  if (pathname.startsWith('/auth')) return 'auth';
+  if (pathname.startsWith('/admin')) return 'admin';
   return 'home';
 };
 
