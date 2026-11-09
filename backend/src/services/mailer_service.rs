@@ -5,7 +5,7 @@
 //! Sending never fails the admin's approve/reject action - errors are only logged.
 
 use lettre::{
-    message::{Mailbox, MultiPart},
+    message::{Attachment, Mailbox, MultiPart, SinglePart},
     transport::smtp::authentication::Credentials,
     AsyncSmtpTransport, AsyncTransport, Message, Tokio1Executor,
 };
@@ -65,7 +65,7 @@ pub async fn send_decision_email(reg: &RegistrationView) {
 
     let (subject, text, html) = build_email(&cfg, reg, &user.name, approved);
 
-    match send(&cfg, &user.email, &user.name, &subject, text, html).await {
+    match send(&cfg, reg, &user.email, &user.name, &subject, text, html).await {
         Ok(()) => info!("{} email sent to {} for registration {}", reg.status, user.email, reg.id),
         Err(e) => warn!("failed to send {} email to {} for registration {}: {}", reg.status, user.email, reg.id, e),
     }
@@ -73,6 +73,7 @@ pub async fn send_decision_email(reg: &RegistrationView) {
 
 async fn send(
     cfg: &MailConfig,
+    reg: &RegistrationView,
     to_email: &str,
     to_name: &str,
     subject: &str,
@@ -82,12 +83,16 @@ async fn send(
     let from: Mailbox = format!("{} <{}>", cfg.from_name, cfg.from_email).parse()?;
     let to: Mailbox = format!("{} <{}>", to_name.replace(['<', '>', '"'], ""), to_email.trim()).parse()?;
 
+    let attachment_svg = build_ticket_svg(&reg.id, &reg.kind, &reg.target_name);
+    let ticket_attachment = Attachment::new_inline("xpecto-ticket.svg".to_string())
+        .body(attachment_svg.as_bytes().to_vec(), "image/svg+xml".parse()?);
+
     let message = Message::builder()
         .from(from)
         .reply_to(cfg.contact_email.parse()?)
         .to(to)
         .subject(subject)
-        .multipart(MultiPart::alternative_plain_html(text, html))?;
+        .multipart(MultiPart::mixed().singlepart(SinglePart::html(html)).singlepart(ticket_attachment))?;
 
     let creds = Credentials::new(cfg.username.clone(), cfg.password.clone());
     // Port 465 = implicit TLS; anything else (587) = STARTTLS.
@@ -157,6 +162,37 @@ fn detail_rows(reg: &RegistrationView, user_name: &str, user_email: &str, user_c
     }
     rows.push(("Transaction ID".into(), reg.transaction_id.clone()));
     rows
+}
+
+fn build_ticket_svg(reg_id: &str, kind: &str, item_name: &str) -> String {
+    let label = match kind {
+        "mess" => "Mess Registration",
+        "event" => "Event Registration",
+        "workshop" => "Workshop Registration",
+        "accommodation" => "Accommodation Booking",
+        _ => "Festival Registration",
+    };
+    let safe_name = item_name
+        .replace('&', "&amp;")
+        .replace('<', "&lt;")
+        .replace('>', "&gt;");
+    format!(
+        r##"<svg xmlns="http://www.w3.org/2000/svg" width="600" height="500" viewBox="0 0 600 500">
+            <rect width="600" height="500" fill="#f4f7fb"/>
+            <rect x="30" y="30" width="540" height="440" rx="18" fill="#ffffff" stroke="#0f172a" stroke-width="3"/>
+            <text x="300" y="90" text-anchor="middle" font-size="36" font-weight="700" fill="#0f172a">XPECTO-27</text>
+            <text x="300" y="125" text-anchor="middle" font-size="16" fill="#475569">{label}</text>
+            <rect x="110" y="170" width="380" height="120" rx="12" fill="#eef2ff" stroke="#4f46e5" stroke-width="2"/>
+            <text x="300" y="210" text-anchor="middle" font-size="15" fill="#475569">Registration ID</text>
+            <text x="300" y="250" text-anchor="middle" font-size="24" font-weight="700" fill="#111827" font-family="monospace">{reg_id}</text>
+            <text x="300" y="320" text-anchor="middle" font-size="16" fill="#334155">{item_name}</text>
+            <text x="300" y="350" text-anchor="middle" font-size="14" fill="#64748b">Show this ticket at check-in</text>
+            <text x="300" y="430" text-anchor="middle" font-size="12" fill="#64748b">IIT Mandi · XPECTO</text>
+        </svg>"##,
+        label = label,
+        reg_id = reg_id,
+        item_name = safe_name,
+    )
 }
 
 fn build_email(cfg: &MailConfig, reg: &RegistrationView, user_name: &str, approved: bool) -> (String, String, String) {

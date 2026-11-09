@@ -8,12 +8,17 @@ export default function MessList({ items }) {
       {items.map(r => (
         <li key={r.id} className="reg-row">
           <div><h3>{r.messName || `${capitalize(r.messOption)} Mess`}</h3>
-            <p className="muted">{fmtDate(r.createdAt)} · {fmtMoney(r.amount)} · Txn {r.transactionId}</p></div>
+            <p className="muted">{fmtDate(r.createdAt)} · {fmtMoney(r.amount)} · Txn {r.transactionId}</p>
+            <p className="muted">Registration ID: {r.id}</p>
+          </div>
           <StatusBadge status={r.status} />
           {r.status === 'approved' && (r.confirmationQrUrl ? (
             <div className="qr-dl">
               <img src={r.confirmationQrUrl} alt={`Confirmation QR for ${r.messOption} mess`} className="qr small" />
-              <a className="btn-slash" href={r.confirmationQrUrl} download={`xpecto-mess-${r.messOption}-${r.id}.png`} target="_blank" rel="noreferrer">Download QR</a>
+              <div>
+                <p className="muted">Ticket ID: {r.id}</p>
+                <a className="btn-slash" href={r.confirmationQrUrl} download={`xpecto-mess-${r.id}.png`} target="_blank" rel="noreferrer">Download QR</a>
+              </div>
             </div>
           ) : <p className="muted">Your QR is being generated.</p>)}
         </li>

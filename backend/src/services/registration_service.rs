@@ -618,7 +618,7 @@ fn is_duplicate_key(e: &mongodb::error::Error) -> bool {
 }
 
 fn generate_qr_url(id: &str) -> String {
-    let svg = r##"<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><rect width="200" height="200" fill="#fff"/><text x="100" y="90" text-anchor="middle" font-size="16" font-weight="bold" fill="#000">XPECTO</text><text x="100" y="115" text-anchor="middle" font-size="11" font-family="monospace" fill="#000">{}</text></svg>"##;
+    let svg = r##"<svg xmlns="http://www.w3.org/2000/svg" width="260" height="240"><rect width="260" height="240" fill="#fff"/><text x="130" y="42" text-anchor="middle" font-size="18" font-weight="bold" fill="#000">XPECTO-27</text><text x="130" y="68" text-anchor="middle" font-size="10" fill="#333">Ticket ID</text><text x="130" y="105" text-anchor="middle" font-size="11" font-family="monospace" fill="#000">{}</text><rect x="25" y="118" width="210" height="90" fill="#fff" stroke="#111" stroke-width="2"/><text x="130" y="155" text-anchor="middle" font-size="10" fill="#111">Registration</text><text x="130" y="175" text-anchor="middle" font-size="10" fill="#111">confirmed</text><text x="130" y="195" text-anchor="middle" font-size="9" fill="#111">Show this ID at check-in</text></svg>"##;
     let svg = svg.replace("{}", &id);
     format!("data:image/svg+xml;utf8,{}", url_encode(&svg))
 }

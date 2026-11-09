@@ -21,7 +21,13 @@ function RegGroup({ title, items }) {
           <li key={r.id} className="reg-row">
             <div>
               <h3>{r.targetName}</h3>
-              <p className="muted">{fmtDate(r.createdAt)}{r.teamName && ` · Team ${r.teamName}`}</p>
+              <p className="muted">{fmtDate(r.createdAt)}{r.teamName && ` · Team ${r.teamName}`} · Registration ID: {r.id}</p>
+              {r.status === 'approved' && r.confirmationQrUrl && (
+                <div className="qr-dl">
+                  <img src={r.confirmationQrUrl} alt={`Confirmation QR for ${r.targetName}`} className="qr small" />
+                  <a className="btn-slash" href={r.confirmationQrUrl} download={`xpecto-ticket-${r.id}.png`} target="_blank" rel="noreferrer">Download ticket</a>
+                </div>
+              )}
             </div>
             <StatusBadge status={r.status} />
           </li>
