@@ -1,5 +1,6 @@
 import { Suspense, useState, useCallback, lazy, useEffect } from 'react';
-import { useLocation } from 'react-router';
+import { createPortal } from 'react-dom';
+import { useLocation, useNavigate } from 'react-router';
 import { motion } from 'motion/react';
 import GlitchNav from './components/GlitchNav';
 import Loader from './components/Loader';
@@ -14,6 +15,44 @@ function ScrollToTop() {
   return null;
 }
 
+/** Skip button: portalled to <body> with the max z-index so no intro layer can cover it. */
+function SkipIntroButton({ onSkip }) {
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') onSkip(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onSkip]);
+
+  return createPortal(
+    <button
+      type="button"
+      onClick={onSkip}
+      aria-label="Skip intro"
+      style={{
+        position: 'fixed',
+        top: 'calc(16px + env(safe-area-inset-top, 0px))',
+        right: 16,
+        zIndex: 2147483647,
+        pointerEvents: 'auto',
+        padding: '8px 16px',
+        fontFamily: "'Share Tech Mono', monospace",
+        fontSize: 13,
+        letterSpacing: '0.12em',
+        textTransform: 'uppercase',
+        color: '#fff',
+        background: 'rgba(0,0,0,0.6)',
+        border: '1px solid #19e6ff',
+        borderRadius: 999,
+        boxShadow: '0 0 12px rgba(25,230,255,0.45)',
+        cursor: 'pointer',
+      }}
+    >
+      Skip ›
+    </button>,
+    document.body
+  );
+}
+
 // Lazy-load heavy 3D components
 const SpaceTimeIntro = lazy(() => import('./components/SpaceTimeIntro'));
 const SpaceTimeBg = lazy(() => import('./components/SpaceTimeBg'));
@@ -25,7 +64,6 @@ const routeToPage = (pathname) => {
   if (pathname === '/' || pathname.startsWith('/about')) return 'about';
   if (pathname.startsWith('/events')) return 'events';
   if (pathname.startsWith('/workshops')) return 'workshops';
-  if (pathname.startsWith('/accommodation')) return 'events';
   if (pathname.startsWith('/sponsors')) return 'sponsors';
   if (pathname.startsWith('/team')) return 'team';
   if (pathname.startsWith('/campus-ambassador')) return 'team';
@@ -35,6 +73,7 @@ const routeToPage = (pathname) => {
 /** Shell: 3D Space-Time intro + per-page backgrounds, glitch navbar, page transitions. */
 export default function App() {
   const location = useLocation();
+  const navigate = useNavigate();
   const [intro, setIntro] = useState(() => !sessionStorage.getItem(KEY));
   const [introGlitchTrigger, setIntroGlitchTrigger] = useState(0);
 
@@ -43,6 +82,11 @@ export default function App() {
     setIntro(false);
     setIntroGlitchTrigger(trigger => trigger + 1);
   }, []);
+
+  const skipIntro = useCallback(() => {
+    finishIntro();
+    navigate('/about', { replace: true });
+  }, [finishIntro, navigate]);
 
   const page = routeToPage(location.pathname);
 
@@ -68,6 +112,8 @@ export default function App() {
           <SpaceTimeIntro onDone={finishIntro} />
         </Suspense>
       )}
+
+      {intro && <SkipIntroButton onSkip={skipIntro} />}
 
       {/* Navbar (hidden during intro) */}
       {!intro && <GlitchNav />}
