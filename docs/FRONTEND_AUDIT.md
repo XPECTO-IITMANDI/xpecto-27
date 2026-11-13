@@ -38,7 +38,7 @@ All routes are defined in `frontend/src/routes.jsx` and mounted under `BrowserRo
 | `/workshops` | Workshops | Grid of `WorkshopCard`s sorted by start time, seats-left indicator | No (register requires auth) |
 | `/mess` | Mess | Mess option selection + user's mess registrations with QR download | No (register requires auth) |
 | `/sponsors` | Sponsors | Tiered sponsors: Title / Gold / Diamond / Silver / Partner | No |
-| `/team` | Team | Team members grouped by role (Convenor, Co-Convenor, Team Head, Member) | No |
+| `/team` | Team | Team members grouped by role (Convenor, Co-Convenor, and team groups) | No |
 | `/auth` | Auth | Login/signup toggle form | Redirects to `/me` if logged in |
 | `/me` | My Registrations | User's event/workshop/mess registrations with status badges | Yes (ProtectedRoute) |
 | `/admin/*` | Admin | Admin panel with CRUD tabs | Yes + admin role (AdminRoute) |

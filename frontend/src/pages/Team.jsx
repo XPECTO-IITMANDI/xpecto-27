@@ -3,10 +3,12 @@ import api from '../api';
 import { useAuth } from '../context/AuthContext';
 import useAsync from '../hooks/useAsync';
 import ErrorState from '../components/ErrorState';
+import { TEAM_ROLES } from '../utils';
 
-// Display order of groups. Contract roles: Convenor | Co-Convenor | Team Head | Member
-const GROUPS = [['Convenor', 'Convenor'], ['Co-Convenor', 'Co-Convenor'], ['Team Head', 'Team Heads'], ['Member', 'Members']];
-const KNOWN = GROUPS.map(([role]) => role);
+const GROUPS = TEAM_ROLES.map(role => [
+  role,
+  role === 'Team Head' ? 'Team Heads' : role === 'Member' ? 'Members' : role,
+]);
 
 function Card({ m, isAdmin }) {
   return (
@@ -33,7 +35,7 @@ export default function Team() {
       {error ? <ErrorState message={error.message} onRetry={reload} /> : !data ? (
         <div className="grid-cards" aria-busy="true">{[1, 2, 3, 4].map(i => <div key={i} className="skeleton" style={{ height: 300 }} />)}</div>
       ) : data.length === 0 ? <p>Team will be announced soon.</p> : GROUPS.map(([role, title]) => {
-        const list = data.filter(m => role === 'Member' ? m.role === role || !KNOWN.includes(m.role) : m.role === role).sort((a, b) => a.order - b.order);
+        const list = data.filter(m => m.role === role).sort((a, b) => a.order - b.order);
         return list.length > 0 && (
           <div key={role}>
             <h2 className="sec-title">{title}</h2>

@@ -7,7 +7,22 @@ export const sameId = (a, b) => a != null && b != null && String(a) === String(b
 export const capitalize = s => s ? s[0].toUpperCase() + s.slice(1) : '';
 
 export const SPONSOR_TIERS = ['Title', 'Gold', 'Diamond', 'Silver', 'Partner'];
-export const TEAM_ROLES = ['Convenor', 'Co-Convenor', 'Team Head', 'Member'];
+export const TEAM_ROLES = [
+  'Convenor',
+  'Co-Convenor',
+  'Web-Dev Team',
+  'Sponsorship Team',
+  'Publicity Team',
+  'Security Team',
+  'Hospitality Team',
+  'Media and Content Team',
+  'Design Team',
+  'Decor Team',
+  'Planning and Management Team',
+  'PMC Team',
+  'Team Head',
+  'Member',
+];
 
 export const canonical = (value, options, fallback) => {
   const key = String(value ?? '').trim().toLowerCase().replace(/[\s_-]+/g, '');
