@@ -4,6 +4,20 @@ import { SPONSOR_TIERS, TEAM_ROLES, canonical, sameId } from './utils';
 const BASE = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
 const http = axios.create({ baseURL: BASE, withCredentials: true });
 
+const normalizeAssetUrl = url => {
+  if (import.meta.env.DEV && url.startsWith('/uploads/')) return url;
+  try {
+    const parsed = new URL(url, window.location.origin);
+    if (['localhost', '127.0.0.1', '::1', '[::1]'].includes(parsed.hostname) && parsed.pathname.startsWith('/uploads/')) {
+      const path = `${parsed.pathname}${parsed.search}${parsed.hash}`;
+      return import.meta.env.DEV || !BASE ? path : BASE + path;
+    }
+  } catch {
+    return url;
+  }
+  return BASE && url.startsWith('/') ? BASE + url : url;
+};
+
 class ApiError extends Error {
   constructor(status, code, message) { super(message); this.status = status; this.code = code; }
 }
@@ -16,7 +30,7 @@ http.interceptors.request.use(c => {
   if (c.data && c.data.constructor === Object) c.data = mapAssets(c.data, u => BASE && u.startsWith(BASE + '/') ? u.slice(BASE.length) : u);
   return c;
 });
-http.interceptors.response.use(r => mapAssets(r.data, u => BASE && u.startsWith('/') ? BASE + u : u), e => {
+http.interceptors.response.use(r => mapAssets(r.data, normalizeAssetUrl), e => {
   const err = e.response?.data?.error;
   return Promise.reject(new ApiError(e.response?.status || 0, err?.code || 'SERVER', err?.message || 'Network error'));
 });
