@@ -36,6 +36,16 @@ pub async fn admin_fest(
     Ok(Json(value))
 }
 
+pub async fn admin_fest_delete(
+    State(state): State<AppState>,
+    Extension(_current_user): Extension<CurrentUser>,
+) -> Result<impl IntoResponse, crate::errors::AppError> {
+    require(&_current_user)?;
+    let svc = PublicService::new(state.db.clone());
+    svc.delete_fest().await?;
+    Ok(Json(json!({ "ok": true })))
+}
+
 pub async fn admin_payment_info(
     State(state): State<AppState>,
     Extension(_current_user): Extension<CurrentUser>,
@@ -48,6 +58,16 @@ pub async fn admin_payment_info(
     let payment = svc.update_payment_info(input).await?;
     let value = serde_json::json!({ "payment": payment });
     Ok(Json(value))
+}
+
+pub async fn admin_payment_delete(
+    State(state): State<AppState>,
+    Extension(_current_user): Extension<CurrentUser>,
+) -> Result<impl IntoResponse, crate::errors::AppError> {
+    require(&_current_user)?;
+    let svc = PublicService::new(state.db.clone());
+    svc.delete_payment_info().await?;
+    Ok(Json(json!({ "ok": true })))
 }
 
 // --- events ---
@@ -214,6 +234,19 @@ pub async fn admin_sponsor_delete(
 
 // --- mess options ---
 
+pub async fn admin_mess_option_create(
+    State(state): State<AppState>,
+    Extension(_current_user): Extension<CurrentUser>,
+    axum::extract::Json(body): axum::extract::Json<serde_json::Value>,
+) -> Result<impl IntoResponse, crate::errors::AppError> {
+    require(&_current_user)?;
+    let svc = PublicService::new(state.db.clone());
+    let input: crate::models::mess::MessOptionInput = serde_json::from_value(body)
+        .map_err(|e| crate::errors::AppError::Validation(e.to_string()))?;
+    let item = svc.create_mess_option(input).await?;
+    Ok(Json(json!({ "mess": item })))
+}
+
 pub async fn admin_mess_option_update(
     State(state): State<AppState>,
     Extension(_current_user): Extension<CurrentUser>,
@@ -226,6 +259,17 @@ pub async fn admin_mess_option_update(
         .map_err(|e| crate::errors::AppError::Validation(e.to_string()))?;
     let item = svc.update_mess_option(&id, input).await?;
     Ok(Json(json!({ "mess": item })))
+}
+
+pub async fn admin_mess_option_delete(
+    State(state): State<AppState>,
+    Extension(_current_user): Extension<CurrentUser>,
+    Path(id): Path<String>,
+) -> Result<impl IntoResponse, crate::errors::AppError> {
+    require(&_current_user)?;
+    let svc = PublicService::new(state.db.clone());
+    svc.delete_mess_option(&id).await?;
+    Ok(Json(json!({ "ok": true })))
 }
 
 // --- registrations ---

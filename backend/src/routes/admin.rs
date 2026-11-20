@@ -15,8 +15,14 @@ pub fn routes(state: AppState) -> Router {
             "/admin/uploads",
             post(upload_handler::upload_file).layer(DefaultBodyLimit::max(6 * 1024 * 1024)),
         )
-        .route("/admin/fest", put(admin_handler::admin_fest))
-        .route("/admin/payment-info", put(admin_handler::admin_payment_info))
+        .route(
+            "/admin/fest",
+            put(admin_handler::admin_fest).delete(admin_handler::admin_fest_delete),
+        )
+        .route(
+            "/admin/payment-info",
+            put(admin_handler::admin_payment_info).delete(admin_handler::admin_payment_delete),
+        )
         .route("/admin/events", post(admin_handler::admin_event_create))
         .route(
             "/admin/events/{id}",
@@ -37,7 +43,11 @@ pub fn routes(state: AppState) -> Router {
             "/admin/sponsors/{id}",
             put(admin_handler::admin_sponsor_update).delete(admin_handler::admin_sponsor_delete),
         )
-        .route("/admin/mess-options/{id}", put(admin_handler::admin_mess_option_update))
+        .route("/admin/mess-options", post(admin_handler::admin_mess_option_create))
+        .route(
+            "/admin/mess-options/{id}",
+            put(admin_handler::admin_mess_option_update).delete(admin_handler::admin_mess_option_delete),
+        )
         .route("/admin/registrations", get(admin_handler::admin_registrations))
         .route("/admin/registrations", post(admin_handler::admin_create_registrations))
         .route(

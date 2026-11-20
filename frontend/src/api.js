@@ -98,14 +98,14 @@ const api = {
   logout: () => http.post('/api/auth/logout'),
   me:     () => http.get('/api/auth/me').then(v => normUser(unwrapUser(v))),
 
-  getFest:        () => http.get('/api/fest').then(v => normFest(unwrapFest(v))),
+  getFest:        () => http.get('/api/fest').then(v => normFest(unwrapFest(v))).catch(e => { if (e.status === 404) return null; throw e; }),
   getEvents:      () => http.get('/api/events').then(mapList(normEvent)),
   getEvent:       id => http.get(`/api/events/${id}`).then(normEvent),
   getWorkshops:   () => http.get('/api/workshops').then(mapList(normWorkshop)),
   getTeam:        () => http.get('/api/team').then(v => mapList(normMember)(v).sort(byOrder)),
   getSponsors:    () => http.get('/api/sponsors').then(mapList(normSponsor)),
   getMessOptions: () => http.get('/api/messoptions').then(mapList(normMess)),
-  getPaymentInfo: () => http.get('/api/payment-info').then(v => normPayment(unwrapPayment(v))),
+  getPaymentInfo: () => http.get('/api/payment-info').then(v => normPayment(unwrapPayment(v))).catch(e => { if (e.status === 404) return null; throw e; }),
 
   createRegistration: form => http.post('/api/registrations', form).then(v => normReg(unwrapReg(v))),
   myRegistrations:    ()   => http.get('/api/registrations/me').then(mapList(normReg)),
@@ -121,7 +121,9 @@ const api = {
 
   admin: {
     updateFest:    b        => http.put('/api/admin/fest', b).then(v => normFest(unwrapFest(v))),
+    deleteFest:    ()        => http.delete('/api/admin/fest'),
     updatePayment: b        => http.put('/api/admin/payment-info', b).then(v => normPayment(unwrapPayment(v))),
+    deletePayment: ()        => http.delete('/api/admin/payment-info'),
 
     events: {
       create: b       => http.post('/api/admin/events', b).then(v => normEvent(unwrapEvent(v))),
@@ -144,7 +146,11 @@ const api = {
       remove: id      => http.delete(`/api/admin/sponsors/${id}`),
     },
 
-    updateMessOption: (id, b) => http.put(`/api/admin/mess-options/${id}`, b).then(v => normMess(unwrapMess(v))),
+    messOptions: {
+      create: b       => http.post('/api/admin/mess-options', b).then(v => normMess(unwrapMess(v))),
+      update: (id, b) => http.put(`/api/admin/mess-options/${id}`, b).then(v => normMess(unwrapMess(v))),
+      remove: id      => http.delete(`/api/admin/mess-options/${id}`),
+    },
 
     upload: file => {
       const f = new FormData(); f.append('file', file); return http.post('/api/admin/uploads', f);

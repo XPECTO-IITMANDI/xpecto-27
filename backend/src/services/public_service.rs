@@ -9,7 +9,7 @@ use crate::models::{
     ambassador::{Ambassador, AmbassadorInput},
     event::{Event, EventInput},
     fest::{FestInfo, FestInfoInput},
-    mess::MessOption,
+    mess::{MessOption, MessOptionInput},
     payment::PaymentInfo,
     sponsor::Sponsor,
     team::TeamMember,
@@ -576,6 +576,15 @@ impl PublicService {
         self.get_fest().await
     }
 
+    pub async fn delete_fest(&self) -> AppResult<()> {
+        self.db
+            .fest_info
+            .delete_many(doc! {}, None)
+            .await
+            .map_err(|e| AppError::Internal(e.to_string()))?;
+        Ok(())
+    }
+
     pub async fn update_payment_info(&self, input: crate::models::payment::PaymentInfoInput) -> AppResult<PaymentInfo> {
         let now = crate::database::now();
         let doc = doc! {
@@ -594,7 +603,44 @@ impl PublicService {
         self.get_payment_info().await
     }
 
-    pub async fn update_mess_option(&self, id: &str, input: crate::models::mess::MessOptionInput) -> AppResult<MessOption> {
+    pub async fn delete_payment_info(&self) -> AppResult<()> {
+        self.db
+            .payment_info
+            .delete_many(doc! {}, None)
+            .await
+            .map_err(|e| AppError::Internal(e.to_string()))?;
+        Ok(())
+    }
+
+    pub async fn create_mess_option(&self, input: MessOptionInput) -> AppResult<MessOption> {
+        let id = bson::oid::ObjectId::new().to_hex();
+        let now = crate::database::now();
+        let doc = doc! {
+            "_id": &id,
+            "name": &input.name,
+            "description": &input.description,
+            "price": input.price.unwrap_or(0),
+            "image_url": input.image_url.unwrap_or_default(),
+            "created_at": now,
+            "updated_at": now,
+        };
+        self.db
+            .mess_options
+            .insert_one(doc, None)
+            .await
+            .map_err(|e| AppError::Internal(e.to_string()))?;
+        let created = self
+            .db
+            .mess_options
+            .find_one(doc! { "_id": &id }, None)
+            .await
+            .map_err(|e| AppError::Internal(e.to_string()))?
+            .ok_or_else(|| AppError::NotFound("Mess option not found after create.".into()))?;
+        bson::from_bson::<MessOption>(bson::Bson::Document(created))
+            .map_err(|e| AppError::Internal(e.to_string()))
+    }
+
+    pub async fn update_mess_option(&self, id: &str, input: MessOptionInput) -> AppResult<MessOption> {
         let now = crate::database::now();
         let mut doc = doc! {};
         doc.insert("name", input.name);
@@ -634,6 +680,23 @@ impl PublicService {
             Some(d) => bson::from_bson::<MessOption>(bson::Bson::Document(d)).map_err(|e| AppError::Internal(e.to_string())),
             None => Err(AppError::NotFound("Mess option not found.".into())),
         }
+    }
+
+    pub async fn delete_mess_option(&self, id: &str) -> AppResult<()> {
+        let filter = match oid_from_hex(id) {
+            Ok(oid) => doc! { "_id": oid },
+            Err(_) => doc! { "_id": id },
+        };
+        let result = self
+            .db
+            .mess_options
+            .delete_one(filter, None)
+            .await
+            .map_err(|e| AppError::Internal(e.to_string()))?;
+        if result.deleted_count == 0 {
+            return Err(AppError::NotFound("Mess option not found.".into()));
+        }
+        Ok(())
     }
 
     pub async fn create_ambassador(&self, input: AmbassadorInput) -> AppResult<Ambassador> {

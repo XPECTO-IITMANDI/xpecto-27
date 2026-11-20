@@ -31,7 +31,8 @@ export default function Admin() {
   const [params, setParams] = useSearchParams();
   const tab = params.get('tab') || 'fest', id = params.get('id');
   const panel = {
-    fest: <SingleForm title="Fest info" load={api.getFest} save={api.admin.updateFest} fields={FEST} />,
+    fest: <SingleForm title="Fest info" load={api.getFest} save={api.admin.updateFest} remove={api.admin.deleteFest} fields={FEST}
+      blank={{ name: '', tagline: '', startDate: '', endDate: '', venue: '', aboutHtml: '', heroImageUrl: '', contactEmail: '', contactPhone: '' }} />,
     events: <CrudTab title="Event" load={api.getEvents} resource={api.admin.events} fields={EVENT} label={x => x.name} initialId={id} prepare={b => ({ ...b, slug: b.slug || slugify(b.name) })}
       blank={{ name: '', category: '', description: '', rules: '', imageUrl: '', startTime: '', endTime: '', venue: '', prizePool: 0, prizeBreakdown: [], registrationFee: 0, teamSize: { min: 1, max: 1 }, registrationOpen: true, contact: { name: '', phone: '' } }} />,
     workshops: <CrudTab title="Workshop" load={api.getWorkshops} resource={api.admin.workshops} fields={WORKSHOP} label={x => x.title} initialId={id}
@@ -40,8 +41,9 @@ export default function Admin() {
       blank={{ name: '', role: 'Member', department: '', photoUrl: '', email: '', linkedinUrl: '', order: 1 }} />,
     sponsors: <CrudTab title="Sponsor" load={api.getSponsors} resource={api.admin.sponsors} fields={SPONSOR} label={x => `${x.name} (${x.tier})`} initialId={id}
       blank={{ name: '', tier: 'Partner', logoUrl: '', websiteUrl: '' }} />,
-    mess: <CrudTab title="Mess option" load={api.getMessOptions} resource={{ update: api.admin.updateMessOption }} fields={MESS} label={x => x.name} canCreate={false} canDelete={false} blank={{}} />,
-    payment: <SingleForm title="Payment QR & UPI" load={api.getPaymentInfo} save={api.admin.updatePayment} fields={PAYMENT} />,
+    mess: <CrudTab title="Mess option" load={api.getMessOptions} resource={api.admin.messOptions} fields={MESS} label={x => x.name} blank={{ name: '', description: '', price: 0, imageUrl: '' }} />,
+    payment: <SingleForm title="Payment QR & UPI" load={api.getPaymentInfo} save={api.admin.updatePayment} remove={api.admin.deletePayment} fields={PAYMENT}
+      blank={{ qrImageUrl: '', upiId: '', note: '' }} />,
     register: <RegisterPerson />,
     ambassadors: <AmbassadorsTab />,
     regs: <RegTable />, messregs: <RegTable mess />, verify: <VerifyTab />, admins: <AdminsTab />,
