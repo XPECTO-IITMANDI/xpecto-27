@@ -3,12 +3,7 @@ import api from '../api';
 import { useAuth } from '../context/AuthContext';
 import useAsync from '../hooks/useAsync';
 import ErrorState from '../components/ErrorState';
-import { TEAM_ROLES } from '../utils';
-
-const GROUPS = TEAM_ROLES.map(role => [
-  role,
-  role === 'Team Head' ? 'Team Heads' : role === 'Member' ? 'Members' : role,
-]);
+import { compareByPreferredOrder, TEAM_ROLE_ORDER } from '../utils';
 
 function Card({ m, isAdmin }) {
   return (
@@ -29,16 +24,21 @@ function Card({ m, isAdmin }) {
 export default function Team() {
   const { data, error, reload } = useAsync(api.getTeam, []);
   const { isAdmin } = useAuth();
+  const groups = data ? [...data.reduce((grouped, member) => {
+    const role = member.role.trim() || 'Unassigned';
+    grouped.set(role, [...(grouped.get(role) || []), member]);
+    return grouped;
+  }, new Map())].sort(([a], [b]) => compareByPreferredOrder(TEAM_ROLE_ORDER, a, b)) : [];
   return (
     <section className="page">
       <h1 className="page-title page-head">Team</h1>
       {error ? <ErrorState message={error.message} onRetry={reload} /> : !data ? (
         <div className="grid-cards" aria-busy="true">{[1, 2, 3, 4].map(i => <div key={i} className="skeleton" style={{ height: 300 }} />)}</div>
-      ) : data.length === 0 ? <p>Team will be announced soon.</p> : GROUPS.map(([role, title]) => {
-        const list = data.filter(m => m.role === role).sort((a, b) => a.order - b.order);
+      ) : data.length === 0 ? <p>Team will be announced soon.</p> : groups.map(([role, members]) => {
+        const list = members.sort((a, b) => a.order - b.order);
         return list.length > 0 && (
           <div key={role}>
-            <h2 className="sec-title">{title}</h2>
+            <h2 className="sec-title">{role}</h2>
             <div className="grid-cards">{list.map(m => <Card key={m.id} m={m} isAdmin={isAdmin} />)}</div>
           </div>
         );

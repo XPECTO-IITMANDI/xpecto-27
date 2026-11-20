@@ -1,64 +1,23 @@
-import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router";
-import api from "../api";
-import { useAuth } from "../context/AuthContext";
-import useAsync from "../hooks/useAsync";
-import ErrorState from "../components/ErrorState";
-import GlitchText from "../components/GlitchText";
-import { groupSponsors } from "../utils";
+import { useMemo } from 'react';
+import { Link } from 'react-router';
+import api from '../api';
+import { useAuth } from '../context/AuthContext';
+import useAsync from '../hooks/useAsync';
+import ErrorState from '../components/ErrorState';
+import GlitchText from '../components/GlitchText';
+import { compareByPreferredOrder, SPONSOR_TIER_ORDER } from '../utils';
 
-/**
- * Sponsors page — Broken Space-Time Multiverse Theme
- * - Title, Gold, and Diamond sponsors have static, dedicated positions in dimensional rift frames.
- * - Partner sponsors flow in one by one on scroll with a prominent [ SPONSOR ] tag.
- */
 export default function Sponsors() {
   const { data, error, reload } = useAsync(api.getSponsors, []);
   const { isAdmin } = useAuth();
-  const [title, setTitle] = useState([]);
-  const [gold, setGold] = useState([]);
-  const [diamond, setDiamond] = useState([]);
-  const [silver, setSilver] = useState([]);
-  const [partners, setPartner] = useState([]);
-  const flowRef = useRef(null);
-
-  // IntersectionObserver to reveal flowing sponsors on scroll
-  useEffect(() => {
-    if (!flowRef.current) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("visible");
-          }
-        });
-      },
-      { threshold: 0.1, rootMargin: "0px 0px -30px 0px" },
-    );
-
-    const cards = flowRef.current.querySelectorAll(".st-sponsor-flow-card");
-    cards.forEach((card, idx) => {
-      card.style.transitionDelay = `${(idx % 6) * 0.08}s`;
-      observer.observe(card);
-    });
-
-    return () => observer.disconnect();
-  }, [partners]);
-
-  useEffect(() => {
-    if (data) {
-      const { title, gold, diamond, silver, partner } = groupSponsors(data);
-      setTitle(title);
-      setGold(gold);
-      setDiamond(diamond);
-      setSilver(silver);
-      setPartner(partner);
-
-      console.log(data);
-      console.log(groupSponsors(data));
+  const groups = useMemo(() => {
+    const grouped = new Map();
+    for (const sponsor of data || []) {
+      const tier = sponsor.tier.trim() || 'Uncategorized';
+      if (!grouped.has(tier)) grouped.set(tier, []);
+      grouped.get(tier).push(sponsor);
     }
-
-    return () => {};
+    return [...grouped.entries()].sort(([a], [b]) => compareByPreferredOrder(SPONSOR_TIER_ORDER, a, b));
   }, [data]);
 
   if (error) {
@@ -83,6 +42,7 @@ export default function Sponsors() {
       </section>
     );
   }
+
   return (
     <section className="page st-page-enter st-sponsors">
       {isAdmin && (
@@ -95,150 +55,39 @@ export default function Sponsors() {
         </Link>
       )}
 
-      <div style={{ textAlign: "center", marginBottom: "3rem" }}>
+      <div className="st-sponsor-heading">
         <h1 className="st-page-title">
           <GlitchText text="SPONSORS & PARTNERS" tag="span" />
         </h1>
-        <p
-          style={{
-            fontFamily: "Courier New, monospace",
-            color: "#00ff88",
-            letterSpacing: "0.25em",
-            fontSize: "0.9rem",
-            marginTop: "-1rem",
-          }}
-        >
-          [ INTERDIMENSIONAL ALLIANCE MATRIX ]
-        </p>
       </div>
 
-      {/* 1. TITLE SPONSOR (STATIC DEDICATED PORTAL) */}
-      {title.length > 0 && (
-        <div className="st-sponsor-tier">
-          <div className="st-sponsor-tier-label title">✦ TITLE SPONSOR ✦</div>
-          <div className="st-sponsor-cards">
-            {title.map((s) => (
-              <div
-                key={s.id}
-                className="st-sponsor-title-card"
+      {groups.length === 0 ? <p>No sponsors yet.</p> : groups.map(([tier, sponsors]) => (
+        <section className="st-sponsor-group" key={tier}>
+          <h2 className="st-sponsor-group-title">{tier}</h2>
+          <div className="st-sponsor-grid">
+            {sponsors.map((sponsor) => (
+              <a
+                key={sponsor.id}
+                className="st-sponsor-card"
+                href={sponsor.websiteUrl || undefined}
+                target={sponsor.websiteUrl ? '_blank' : undefined}
+                rel={sponsor.websiteUrl ? 'noreferrer noopener' : undefined}
               >
-                <span className="st-sponsor-card-name">{s.name}</span>
-                <img
-                  src={s.logoUrl}
-                  alt={s.name}
-                  loading="lazy"
-                  decoding="async"
-                  className="st-sponsor-card-logo"
-                />
-              </div>
+                <span className="st-sponsor-card-name">{sponsor.name}</span>
+                {sponsor.logoUrl && (
+                  <img
+                    src={sponsor.logoUrl}
+                    alt={`${sponsor.name} logo`}
+                    loading="lazy"
+                    decoding="async"
+                    className="st-sponsor-card-logo"
+                  />
+                )}
+              </a>
             ))}
           </div>
-        </div>
-      )}
-
-      {/* 2. GOLD SPONSORS (STATIC DEDICATED ROW) */}
-      {gold.length > 0 && (
-        <div className="st-sponsor-tier">
-          <div className="st-sponsor-tier-label gold">◆ GOLD SPONSORS ◆</div>
-          <div className="st-sponsor-cards">
-            {gold.map((s) => (
-              <div
-                key={s.id}
-                className="st-sponsor-gold-card"
-              >
-                <span className="st-sponsor-card-name">{s.name}</span>
-                <img
-                  src={s.logoUrl}
-                  alt={s.name}
-                  loading="lazy"
-                  decoding="async"
-                  className="st-sponsor-card-logo"
-                />
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* 3. DIAMOND SPONSORS (STATIC DEDICATED ROW) */}
-      {diamond.length > 0 && (
-        <div className="st-sponsor-tier">
-          <div className="st-sponsor-tier-label diamond">
-            ❖ DIAMOND SPONSORS ❖
-          </div>
-          <div className="st-sponsor-cards">
-            {diamond.map((s) => (
-              <div
-                key={s.id}
-                className="st-sponsor-diamond-card"
-              >
-                <span className="st-sponsor-card-name">{s.name}</span>
-                <img
-                  src={s.logoUrl}
-                  alt={s.name}
-                  loading="lazy"
-                  decoding="async"
-                  className="st-sponsor-card-logo"
-                />
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* 4. SILVER SPONSORS (STATIC ROW) */}
-      {silver.length > 0 && (
-        <div className="st-sponsor-tier">
-          <div className="st-sponsor-tier-label silver">
-            ◇ SILVER SPONSORS ◇
-          </div>
-          <div className="st-sponsor-cards">
-            {silver.map((s) => (
-              <div
-                key={s.id}
-                className="st-sponsor-silver-card"
-              >
-                <span className="st-sponsor-card-name">{s.name}</span>
-
-                <img
-                  src={s.logoUrl}
-                  alt={s.name}
-                  loading="lazy"
-                  decoding="async"
-                  className="st-sponsor-card-logo"
-                />
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* 5. PARTNERS (FLOWING ONE BY ONE ON SCROLL WITH SPONSOR TAG) */}
-      {partners.length > 0 && (
-        <div className="st-sponsor-tier">
-          <div className="st-sponsor-tier-label partner">
-            ● FLOWING PARTNER NETWORK ●
-          </div>
-          <div className="st-sponsor-flow" ref={flowRef}>
-            {partners.map((s) => (
-              <div
-                key={s.id}
-                className="st-sponsor-flow-card"
-              >
-                <span className="st-sponsor-card-name">{s.name}</span>
-
-                <img
-                  src={s.logoUrl}
-                  alt={s.name}
-                  loading="lazy"
-                  decoding="async"
-                  className="st-sponsor-card-logo"
-                />
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+        </section>
+      ))}
     </section>
   );
 }

@@ -6,8 +6,7 @@ export const dayMon = iso => iso ? { d: new Date(iso).toLocaleDateString('en-IN'
 export const sameId = (a, b) => a != null && b != null && String(a) === String(b);
 export const capitalize = s => s ? s[0].toUpperCase() + s.slice(1) : '';
 
-export const SPONSOR_TIERS = ['Title', 'Gold', 'Diamond', 'Silver', 'Partner'];
-export const TEAM_ROLES = [
+export const TEAM_ROLE_ORDER = [
   'Convenor',
   'Co-Convenor',
   'Web-Dev Team',
@@ -24,15 +23,20 @@ export const TEAM_ROLES = [
   'Member',
 ];
 
+export const SPONSOR_TIER_ORDER = ['Title', 'Gold', 'Diamond', 'Silver', 'Partner'];
+
+export const compareByPreferredOrder = (order, a, b) => {
+  const rank = value => order.findIndex(item => item.toLowerCase() === value.toLowerCase());
+  const aRank = rank(a);
+  const bRank = rank(b);
+  if (aRank < 0) return bRank < 0 ? a.localeCompare(b) : 1;
+  if (bRank < 0) return -1;
+  return aRank - bRank;
+};
+
 export const canonical = (value, options, fallback) => {
   const key = String(value ?? '').trim().toLowerCase().replace(/[\s_-]+/g, '');
   return options.find(o => o.toLowerCase().replace(/[\s_-]+/g, '') === key) ?? fallback;
-};
-
-export const groupSponsors = list => {
-  const valid = list.filter(s => typeof s.logoUrl === 'string' && s.logoUrl.trim());
-  const by = tier => valid.filter(s => s.tier === tier);
-  return { all: valid, title: by('Title'), gold: by('Gold'), diamond: by('Diamond'), silver: by('Silver'), partner: by('Partner') };
 };
 
 export const istDayCount = (startIso, endIso) => {

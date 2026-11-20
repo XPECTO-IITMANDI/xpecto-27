@@ -62,8 +62,8 @@ backend/
 │   │   ├── public_service.rs # public reads + admin content CRUD
 │   │   ├── registration_service.rs # atomic duplicate prevention
 │   │   └── upload_service.rs # file validation/storage
-│   └── seed.rs         # idempotent seeding from seed-data/*.json
-├── seed-data/          # copies of frontend mock JSON (fest, events, …)
+│   └── seed.rs         # idempotent defaults for fest, mess and payment info
+├── seed-data/          # optional defaults for fest, mess and payment info
 └── uploads/            # uploaded screenshots (created at runtime)
 ```
 
@@ -202,7 +202,7 @@ curl http://localhost:3000/health   # → ok
 - [ ] `POST /api/auth/login` with wrong password → 401
 - [ ] `GET /api/auth/me` with cookie → user; without → 401
 - [ ] `POST /api/auth/logout` → clears cookie
-- [ ] `GET /api/events`, `/api/workshops`, `/api/team`, `/api/sponsors`, `/api/messoptions`, `/api/fest`, `/api/payment-info` → seeded data
+- [ ] `GET /api/events`, `/api/workshops`, `/api/team`, `/api/sponsors` → MongoDB content (empty until added); fest, mess and payment may be seeded
 - [ ] `POST /api/registrations` → 201; same user+target again → 409 ALREADY_REGISTERED; reused transactionId → 409 DUPLICATE_TRANSACTION
 - [ ] `GET /api/registrations/me` → user's registrations
 - [ ] `POST /api/mess/registrations` → 201

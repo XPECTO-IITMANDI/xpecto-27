@@ -49,7 +49,7 @@ cargo build --release
 cargo run --release
 ```
 
-The server listens on `HOST:PORT` (default `0.0.0.0:3000`) and seeds MongoDB on first start if `SEED_ON_START=true`.
+The server listens on `HOST:PORT` (default `0.0.0.0:3000`) and seeds fest, mess and payment defaults on first start if `SEED_ON_START=true`. Events, workshops, team members and sponsors are loaded only from MongoDB and are created through the admin interface or directly in their collections.
 
 ### 3. Verify
 

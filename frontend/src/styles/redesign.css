@@ -138,16 +138,12 @@
 .dsec { margin-top: 2rem; padding-left: 1.2rem; border-left: 2px solid var(--fire); text-shadow: 0 2px 10px #000; } .dsec h2 { color: var(--volt); }
 .prizes li { background: rgba(255,214,10,.12); clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px)); border-color: rgba(255,214,10,.6); }
 
-/* Sponsors: Title tier in cut-corner frames, the rest bare on the scene */
+/* Sponsors: bare on the scene */
 .sponsor-card { background: none; border: 0; clip-path: none; box-shadow: none; padding: .8rem; text-shadow: 0 2px 10px #000; }
-.sponsor-grid.tier-Title .sponsor-card { clip-path: polygon(0 18px, 18px 0, calc(100% - 18px) 0, 100% 18px, 100% calc(100% - 18px), calc(100% - 18px) 100%, 18px 100%, 0 calc(100% - 18px)); box-shadow: inset 0 0 0 2px var(--fire), inset 0 0 40px rgba(255,214,10,.2); background: rgba(10,8,26,.45); animation: none; }
-.sponsor-grid.tier-Gold .sponsor-card { box-shadow: inset 0 -2px 0 rgba(255,194,51,.7); }
-.sponsor-grid.tier-Silver .sponsor-card { box-shadow: inset 0 -1px 0 rgba(201,212,230,.5); }
 
 /* Team: hexagon portraits, text straight on the scene */
 .member { background: none; border: 0; clip-path: none; box-shadow: none; padding: .6rem; text-shadow: 0 2px 12px #000; }
 .member-photo { width: 170px; height: 196px; border: 0; box-shadow: none; clip-path: polygon(50% 0, 100% 18%, 100% 82%, 50% 100%, 0 82%, 0 18%); }
-.member[data-role="Convenor"] .member-photo, .member[data-role="Co-Convenor"] .member-photo { width: 200px; height: 230px; }
 .member[data-role] { border-color: transparent; }
 
 /* Mess options: cut-corner selectable tiles */
@@ -212,11 +208,10 @@
 @media (max-width: 700px) { .wrow { grid-template-columns: auto 1fr; } .wside { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; } .wfee { margin: 0; } }
 
 /* Sponsors: no boxes, just names / logos by tier */
-.sponsor-grid, .sponsor-grid.tier-Title, .sponsor-grid.tier-Gold { display: flex; flex-wrap: wrap; justify-content: center; gap: 1.2rem 3.2rem; margin: 1rem 0 2rem; }
-.sponsor-card, .sponsor-grid.tier-Title .sponsor-card, .sponsor-grid.tier-Gold .sponsor-card, .sponsor-grid.tier-Silver .sponsor-card { min-height: 0; padding: .3rem 0; background: none; clip-path: none; box-shadow: none; animation: none; border: 0; color: #fff; font: 700 1.1rem 'Orbitron'; letter-spacing: .1em; text-transform: uppercase; }
-.sponsor-grid.tier-Title .sponsor-card { font-size: 2.2rem; color: var(--fire); text-shadow: 0 0 22px rgba(255,214,10,.55); } .sponsor-grid.tier-Gold .sponsor-card { font-size: 1.5rem; }
+.sponsor-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 1.2rem 3.2rem; margin: 1rem 0 2rem; }
+.sponsor-card { min-height: 0; padding: .3rem 0; background: none; clip-path: none; box-shadow: none; animation: none; border: 0; color: #fff; font: 700 1.1rem 'Orbitron'; letter-spacing: .1em; text-transform: uppercase; }
 .sponsor-card::after { display: none; } .sponsor-card.tilt-card:hover { box-shadow: none; border-color: transparent; color: var(--fire); }
-.sponsor-card img { max-width: 220px; max-height: 70px; } .sponsor-grid.tier-Title .sponsor-card img { max-height: 120px; max-width: 320px; }
+.sponsor-card img { max-width: 220px; max-height: 70px; }
 
 /* Tighter fit between the frame and the card content; chamfer the content corners so the frame's corner pieces stay visible */
 .fcard { padding: 6px; border-width: 8px; }
@@ -282,8 +277,6 @@
   .grid-cards:has(> .member) { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .6rem; }
   .member { padding: .3rem; }
   .member-photo { width: 110px; height: 128px; }
-  .member[data-role="Convenor"], .member[data-role="Co-Convenor"] { grid-column: 1 / -1; }
-  .member[data-role="Convenor"] .member-photo, .member[data-role="Co-Convenor"] .member-photo { width: 136px; height: 158px; }
   .member h3 { font-size: 1rem; margin: .4rem 0 .2rem; } .member p { font-size: .85rem; }
 }
 

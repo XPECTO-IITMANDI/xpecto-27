@@ -8,7 +8,7 @@ import AdminsTab from './AdminsTab';
 import VerifyTab from './VerifyTab';
 import AmbassadorsTab from './AmbassadorsTab';
 import { slugify } from './util';
-import { SPONSOR_TIERS, TEAM_ROLES } from '../../utils';
+import { TEAM_ROLE_ORDER } from '../../utils';
 
 const T = (path, label, type = 'text', extra = {}) => ({ path, label, type, ...extra });
 
@@ -19,9 +19,9 @@ const EVENT = [T('name', 'Name', 'text', { required: true }), T('category', 'Cat
   T('teamSize.min', 'Team size min', 'number'), T('teamSize.max', 'Team size max', 'number'), T('registrationOpen', 'Registration open', 'checkbox'), T('contact.name', 'Contact name'), T('contact.phone', 'Contact phone')];
 const WORKSHOP = [T('title', 'Title', 'text', { required: true }), T('description', 'Description', 'textarea'), T('imageUrl', 'Image', 'image'), T('speaker', 'Speaker'), T('startTime', 'Starts', 'datetime'), T('endTime', 'Ends', 'datetime'),
   T('venue', 'Venue'), T('fee', 'Fee (₹)', 'number'), T('seatsTotal', 'Total seats', 'number'), T('seatsLeft', 'Seats left', 'number')];
-const TEAM = [T('name', 'Name', 'text', { required: true }), T('role', 'Role', 'select', { options: TEAM_ROLES }), T('department', 'Department'), T('photoUrl', 'Photo', 'image'),
+const TEAM = [T('name', 'Name', 'text', { required: true }), T('role', 'Role', 'select', { options: TEAM_ROLE_ORDER, required: true }), T('department', 'Department'), T('photoUrl', 'Photo', 'image'),
   T('email', 'Email', 'email'), T('linkedinUrl', 'LinkedIn URL', 'url'), T('order', 'Display order', 'number')];
-const SPONSOR = [T('name', 'Name', 'text', { required: true }), T('tier', 'Tier', 'select', { options: SPONSOR_TIERS }), T('logoUrl', 'Logo', 'image'), T('websiteUrl', 'Website', 'url')];
+const SPONSOR = [T('name', 'Name', 'text', { required: true }), T('tier', 'Tier', 'text', { required: true }), T('logoUrl', 'Logo', 'image'), T('websiteUrl', 'Website', 'url')];
 const MESS = [T('name', 'Name', 'text', { required: true }), T('description', 'Description', 'textarea'), T('price', 'Price (₹)', 'number'), T('imageUrl', 'Image', 'image')];
 const PAYMENT = [T('qrImageUrl', 'Payment QR image', 'image'), T('upiId', 'UPI ID', 'text', { required: true }), T('note', 'Note shown to users', 'textarea')];
 
@@ -40,7 +40,7 @@ export default function Admin() {
     team: <CrudTab title="Team member" load={api.getTeam} resource={api.admin.team} fields={TEAM} label={x => `${x.name} (${x.role})`} initialId={id}
       blank={{ name: '', role: 'Member', department: '', photoUrl: '', email: '', linkedinUrl: '', order: 1 }} />,
     sponsors: <CrudTab title="Sponsor" load={api.getSponsors} resource={api.admin.sponsors} fields={SPONSOR} label={x => `${x.name} (${x.tier})`} initialId={id}
-      blank={{ name: '', tier: 'Partner', logoUrl: '', websiteUrl: '' }} />,
+      blank={{ name: '', tier: '', logoUrl: '', websiteUrl: '' }} />,
     mess: <CrudTab title="Mess option" load={api.getMessOptions} resource={api.admin.messOptions} fields={MESS} label={x => x.name} blank={{ name: '', description: '', price: 0, imageUrl: '' }} />,
     payment: <SingleForm title="Payment QR & UPI" load={api.getPaymentInfo} save={api.admin.updatePayment} remove={api.admin.deletePayment} fields={PAYMENT}
       blank={{ qrImageUrl: '', upiId: '', note: '' }} />,

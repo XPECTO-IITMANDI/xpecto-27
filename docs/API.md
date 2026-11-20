@@ -268,6 +268,7 @@ Current user's mess registrations.
 | Mess options | — | `PUT /api/admin/mess-options/:id` | — |
 
 Create/update bodies use the same field shape as the public models (camelCase). Mess options use string `_id`.
+Public event, workshop, team and sponsor pages read directly from their MongoDB collections. Those collections are not seeded; create records in `/admin` or insert documents that match the models above in MongoDB. Team roles and sponsor tiers are stored and displayed as entered, with no predefined list.
 
 ### File upload
 **POST `/api/admin/uploads`** — multipart `file`. Returns `{ "url": "/uploads/<file>" }`. Max 5 MB, image only.

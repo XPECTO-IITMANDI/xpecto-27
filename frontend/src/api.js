@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { SPONSOR_TIERS, TEAM_ROLES, canonical, sameId } from './utils';
+import { canonical, sameId } from './utils';
 
 const BASE = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
 const http = axios.create({ baseURL: BASE, withCredentials: true });
@@ -77,8 +77,8 @@ const normWorkshop = w => {
   return { ...o, id: entityId(o), title: str(o.title), description: str(o.description), imageUrl: str(o.imageUrl), speaker: str(o.speaker), startTime: iso(o.startTime), endTime: iso(o.endTime),
     venue: str(o.venue), fee: num(o.fee), seatsTotal: total, seatsLeft: total ? Math.min(total, Math.max(0, num(o.seatsLeft))) : Math.max(0, num(o.seatsLeft)) };
 };
-const normMember = m => { const o = toObject(m); return { ...o, id: entityId(o), name: str(o.name), role: canonical(o.role, TEAM_ROLES, 'Member'), department: str(o.department), photoUrl: str(o.photoUrl), email: str(o.email), linkedinUrl: str(o.linkedinUrl), order: num(o.order, 9999) }; };
-const normSponsor = s => { const o = toObject(s); return { ...o, id: entityId(o), name: str(o.name), tier: canonical(o.tier, SPONSOR_TIERS, 'Partner'), logoUrl: str(o.logoUrl), websiteUrl: str(o.websiteUrl) }; };
+const normMember = m => { const o = toObject(m); return { ...o, id: entityId(o), name: str(o.name), role: str(o.role), department: str(o.department), photoUrl: str(o.photoUrl), email: str(o.email), linkedinUrl: str(o.linkedinUrl), order: num(o.order, 9999) }; };
+const normSponsor = s => { const o = toObject(s); return { ...o, id: entityId(o), name: str(o.name), tier: str(o.tier), logoUrl: str(o.logoUrl), websiteUrl: str(o.websiteUrl) }; };
 const normMess = m => { const o = toObject(m); return { ...o, id: str(entityId(o)), name: str(o.name), description: str(o.description), price: num(o.price), imageUrl: str(o.imageUrl) }; };
 const normPayment = p => { const o = toObject(p); return { ...o, qrImageUrl: str(o.qrImageUrl), upiId: str(o.upiId), note: str(o.note) }; };
 const STATUSES = ['pending', 'approved', 'rejected'];

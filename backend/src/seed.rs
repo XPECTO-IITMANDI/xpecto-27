@@ -1,7 +1,7 @@
-use mongodb::bson::{doc, oid::ObjectId, DateTime};
+use mongodb::bson::{doc, DateTime};
 use serde_json::Value;
 use std::path::PathBuf;
-use tracing::{info, warn};
+use tracing::info;
 
 use crate::database::AppDatabase;
 
@@ -13,15 +13,6 @@ impl Seed {
         if count == 0 {
             Self::seed_fest(db, seed_dir.join("fest.json")).await?;
         }
-
-        let count = db.events.count_documents(doc! {}, None).await?;
-        if count == 0 {
-            Self::seed_events(db, seed_dir.join("events.json")).await?;
-        }
-
-        // Sponsors, workshops and team members are intentionally NOT seeded.
-        // They live only in the database and are managed from the admin panel,
-        // so deleting them there (or in MongoDB) is permanent across restarts.
 
         let count = db.mess_options.count_documents(doc! {}, None).await?;
         if count == 0 {
@@ -81,62 +72,16 @@ impl Seed {
         Ok(())
     }
 
-    async fn seed_events(db: &AppDatabase, path: PathBuf) -> anyhow::Result<()> {
-        let data = Self::read_json(path)?;
-        let arr = data.as_array().cloned().unwrap_or_default();
-        for item in arr.iter() {
-            let now = DateTime::now();
-            let prize_breakdown: Vec<bson::Bson> = item
-                .get("prizeBreakdown")
-                .and_then(|v| v.as_array())
-                .unwrap_or(&Vec::new())
-                .iter()
-                .map(|p| {
-                    bson::Bson::Document(doc! {
-                        "position": p.get("position").and_then(|v| v.as_str()).unwrap_or(""),
-                        "amount": p.get("amount").and_then(|v| v.as_i64()).unwrap_or(0),
-                    })
-                })
-                .collect();
-            let ts = item.get("teamSize").and_then(|v| v.as_object()).cloned().unwrap_or_default();
-            let contact = item.get("contact").and_then(|v| v.as_object()).cloned().unwrap_or_default();
-            let doc = doc! {
-                "slug": item.get("slug").and_then(|v| v.as_str()).unwrap_or(""),
-                "name": item.get("name").and_then(|v| v.as_str()).unwrap_or(""),
-                "category": item.get("category").and_then(|v| v.as_str()).unwrap_or(""),
-                "description": item.get("description").and_then(|v| v.as_str()).unwrap_or(""),
-                "rules": item.get("rules").and_then(|v| v.as_str()).unwrap_or(""),
-                "image_url": item.get("imageUrl").and_then(|v| v.as_str()).unwrap_or(""),
-                "start_time": parse_iso(item.get("startTime").and_then(|v| v.as_str()).unwrap_or("")),
-                "end_time": parse_iso(item.get("endTime").and_then(|v| v.as_str()).unwrap_or("")),
-                "venue": item.get("venue").and_then(|v| v.as_str()).unwrap_or(""),
-                "prize_pool": item.get("prizePool").and_then(|v| v.as_i64()).unwrap_or(0),
-                "prize_breakdown": prize_breakdown,
-                "registration_fee": item.get("registrationFee").and_then(|v| v.as_i64()).unwrap_or(0),
-                "team_size": doc! {
-                    "min": ts.get("min").and_then(|v| v.as_i64()).unwrap_or(1) as i32,
-                    "max": ts.get("max").and_then(|v| v.as_i64()).unwrap_or(1) as i32,
-                },
-                "registration_open": item.get("registrationOpen").and_then(|v| v.as_bool()).unwrap_or(true),
-                "contact": doc! {
-                    "name": contact.get("name").and_then(|v| v.as_str()).unwrap_or(""),
-                    "phone": contact.get("phone").and_then(|v| v.as_str()).unwrap_or(""),
-                },
-                "created_at": now,
-                "updated_at": now,
-            };
-            db.events.insert_one(doc, None).await?;
-        }
-        info!("seeded {} events", arr.len());
-        Ok(())
-    }
-
     async fn seed_mess(db: &AppDatabase, path: PathBuf) -> anyhow::Result<()> {
         let data = Self::read_json(path)?;
         let arr = data.as_array().cloned().unwrap_or_default();
         for item in arr.iter() {
             let now = DateTime::now();
-            let id = item.get("id").and_then(|v| v.as_str()).unwrap_or("mess").to_string();
+            let id = item
+                .get("id")
+                .and_then(|v| v.as_str())
+                .unwrap_or("mess")
+                .to_string();
             let doc = doc! {
                 "_id": id,
                 "name": item.get("name").and_then(|v| v.as_str()).unwrap_or(""),
@@ -181,9 +126,4 @@ fn parse_iso(s: &str) -> Option<DateTime> {
                 .map(|dt| DateTime::from_millis(dt.timestamp_millis()))
                 .ok()
         })
-}
-
-#[allow(dead_code)]
-fn new_oid() -> ObjectId {
-    ObjectId::new()
 }

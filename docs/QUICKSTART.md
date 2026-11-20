@@ -9,7 +9,7 @@
 cd backend
 cp .env.example .env
 # edit JWT_SECRET if desired
-cargo run              # :3000, seeds automatically
+cargo run              # :3000; seeds fest, mess and payment defaults
 curl http://localhost:3000/health   # ok
 ```
 
@@ -24,7 +24,7 @@ npm install   # if needed
 npm run dev   # :5173
 ```
 
-Open `http://localhost:5173`. Browse events, register, log in, view `/me`, and use `/admin` (seed creates default admin `b25347@students.iitmandi.ac.in` — sign up with that email to get admin role).
+Open `http://localhost:5173`. Events, workshops, team members and sponsors are not seeded; add them in `/admin` or directly to the `events`, `workshops`, `team_members` and `sponsors` MongoDB collections. The admin forms accept custom categories, roles and tiers. For the MongoDB document fields, see [the API reference](./API.md) and [database schemas](./ARCHITECTURE.md). Existing MongoDB records are not deleted when the seed data is removed.
 
 ## 4. Docs
 - `docs/FRONTEND_AUDIT.md` — frontend pages, components, data models, API contract
