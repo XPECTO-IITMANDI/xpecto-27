@@ -43,7 +43,7 @@ export default function Sponsors() {
     });
 
     return () => observer.disconnect();
-  }, []);
+  }, [partners]);
 
   useEffect(() => {
     if (data) {
@@ -116,24 +116,21 @@ export default function Sponsors() {
       {title.length > 0 && (
         <div className="st-sponsor-tier">
           <div className="st-sponsor-tier-label title">✦ TITLE SPONSOR ✦</div>
-          <div className="flex justify-center gap-7">
+          <div className="st-sponsor-cards">
             {title.map((s) => (
-              <a
+              <div
                 key={s.id}
-                href={s.websiteUrl}
-                target="_blank"
-                rel="noreferrer noopener"
-                className="h-96 border p-2 rounded-lg flex flex-col items-center justify-center bg-[rgba(0,204,255,0.2)] hover:shadow-2xl hover:-translate-y-1 shadow-[rgba(0,204,255,0.3)] hover:border-2 transition duration-200"
+                className="st-sponsor-title-card"
               >
-                <span>{s.name}</span>
+                <span className="st-sponsor-card-name">{s.name}</span>
                 <img
                   src={s.logoUrl}
                   alt={s.name}
                   loading="lazy"
                   decoding="async"
-                  className="w-64 rounded-lg"
+                  className="st-sponsor-card-logo"
                 />
-              </a>
+              </div>
             ))}
           </div>
         </div>
@@ -143,24 +140,21 @@ export default function Sponsors() {
       {gold.length > 0 && (
         <div className="st-sponsor-tier">
           <div className="st-sponsor-tier-label gold">◆ GOLD SPONSORS ◆</div>
-          <div className="flex justify-center gap-7">
+          <div className="st-sponsor-cards">
             {gold.map((s) => (
-              <a
+              <div
                 key={s.id}
-                href={s.websiteUrl}
-                target="_blank"
-                rel="noreferrer noopener"
-                className="border-[rgba(255,215,0,1)] border p-2 rounded-lg flex flex-col items-center justify-center bg-[rgba(255,217,0,0.17)] hover:shadow-2xl hover:-translate-y-1 shadow-[rgba(255,215,0,0.3)] transition duration-200 hover:border-2"
+                className="st-sponsor-gold-card"
               >
-                <span className="text-[rgba(255,215,0)]">{s.name}</span>
+                <span className="st-sponsor-card-name">{s.name}</span>
                 <img
                   src={s.logoUrl}
                   alt={s.name}
                   loading="lazy"
                   decoding="async"
-                  className="w-64 rounded-lg"
+                  className="st-sponsor-card-logo"
                 />
-              </a>
+              </div>
             ))}
           </div>
         </div>
@@ -172,24 +166,21 @@ export default function Sponsors() {
           <div className="st-sponsor-tier-label diamond">
             ❖ DIAMOND SPONSORS ❖
           </div>
-          <div className="flex justify-center gap-7">
+          <div className="st-sponsor-cards">
             {diamond.map((s) => (
-              <a
+              <div
                 key={s.id}
-                href={s.websiteUrl}
-                target="_blank"
-                rel="noreferrer noopener"
-                className="border border-[rgba(0,240,255,1)] p-2 rounded-lg flex flex-col items-center justify-center bg-[rgba(0,240,255,0.1)] hover:shadow-2xl hover:-translate-y-1 shadow-[rgba(0,240,255,0.3)] hover:border-2 transition duration-200"
+                className="st-sponsor-diamond-card"
               >
-                <span>{s.name}</span>
+                <span className="st-sponsor-card-name">{s.name}</span>
                 <img
                   src={s.logoUrl}
                   alt={s.name}
                   loading="lazy"
                   decoding="async"
-                  className="w-64 rounded-lg"
+                  className="st-sponsor-card-logo"
                 />
-              </a>
+              </div>
             ))}
           </div>
         </div>
@@ -201,25 +192,22 @@ export default function Sponsors() {
           <div className="st-sponsor-tier-label silver">
             ◇ SILVER SPONSORS ◇
           </div>
-          <div className="flex justify-center gap-7">
+          <div className="st-sponsor-cards">
             {silver.map((s) => (
-              <a
+              <div
                 key={s.id}
-                href={s.websiteUrl}
-                target="_blank"
-                rel="noreferrer noopener"
-                className="border border-[#c0c0c0] p-2 rounded-lg flex flex-col items-center justify-center bg-[rgba(192,192,192,0.1)] hover:shadow-2xl hover:-translate-y-1 shadow-[rgba(192,192,192,0.3)] hover:border-2 transition duration-200"
+                className="st-sponsor-silver-card"
               >
-                <span>{s.name}</span>
+                <span className="st-sponsor-card-name">{s.name}</span>
 
                 <img
                   src={s.logoUrl}
                   alt={s.name}
                   loading="lazy"
                   decoding="async"
-                  className="w-64 rounded-lg"
+                  className="st-sponsor-card-logo"
                 />
-              </a>
+              </div>
             ))}
           </div>
         </div>
@@ -231,25 +219,22 @@ export default function Sponsors() {
           <div className="st-sponsor-tier-label partner">
             ● FLOWING PARTNER NETWORK ●
           </div>
-          <div className="flex justify-center gap-7" ref={flowRef}>
+          <div className="st-sponsor-flow" ref={flowRef}>
             {partners.map((s) => (
-              <a
+              <div
                 key={s.id}
-                href={s.websiteUrl}
-                target="_blank"
-                rel="noreferrer noopener"
-                className="border border-[rgba(0,255,136,1)] p-2 rounded-lg flex flex-col items-center justify-center bg-[rgba(0,255,136,0.1)] hover:shadow-2xl hover:-translate-y-1 shadow-[rgba(0,255,136,0.3)] hover:border-2 transition duration-200"
+                className="st-sponsor-flow-card"
               >
-                <span>{s.name}</span>
+                <span className="st-sponsor-card-name">{s.name}</span>
 
                 <img
                   src={s.logoUrl}
                   alt={s.name}
                   loading="lazy"
                   decoding="async"
-                  className="w-64 rounded-lg"
+                  className="st-sponsor-card-logo"
                 />
-              </a>
+              </div>
             ))}
           </div>
         </div>

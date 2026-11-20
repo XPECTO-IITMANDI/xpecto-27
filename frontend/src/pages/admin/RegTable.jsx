@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import toast from "react-hot-toast";
 import api from "../../api";
 import useAsync from "../../hooks/useAsync";
@@ -15,6 +16,45 @@ const KINDS = [
   ["accommodation", "Accommodation"],
 ];
 
+function ProofViewer({ url, onClose }) {
+  const [loadError, setLoadError] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") onClose();
+    };
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [onClose]);
+
+  return createPortal(
+    <div
+      className="modal-overlay"
+      onMouseDown={(event) => event.target === event.currentTarget && onClose()}
+    >
+      <div className="proof-viewer" role="dialog" aria-modal="true" aria-labelledby="proof-viewer-title">
+        <button className="modal-x" onClick={onClose} aria-label="Close proof preview">×</button>
+        <h2 id="proof-viewer-title">Payment proof</h2>
+        {loadError ? (
+          <p role="alert">The proof image could not be loaded. Check that the backend is running and the upload is available.</p>
+        ) : (
+          <img
+            src={url}
+            alt="Submitted payment proof"
+            onError={() => setLoadError(true)}
+          />
+        )}
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
 /** Registrations review table. mess=true switches to the mess endpoints. */
 export default function RegTable({ mess = false }) {
   const [f, setF] = useState({
@@ -25,6 +65,7 @@ export default function RegTable({ mess = false }) {
   });
   const [rejecting, setRejecting] = useState(null);
   const [confirmation, setConfirmation] = useState(null);
+  const [proofUrl, setProofUrl] = useState(null);
   const [reason, setReason] = useState("");
   const fail = useAdminError();
   const targets = useAsync(
@@ -212,13 +253,9 @@ export default function RegTable({ mess = false }) {
                   <td>{fmtDate(r.createdAt)}</td>
                   <td>
                     {r.screenshotUrl ? (
-                      <a
-                        href={r.screenshotUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
+                      <button className="link-btn" onClick={() => setProofUrl(r.screenshotUrl)}>
                         View
-                      </a>
+                      </button>
                     ) : (
                       "—"
                     )}
@@ -286,6 +323,7 @@ export default function RegTable({ mess = false }) {
           danger={confirmation.action === "reject"}
         />
       )}
+      {proofUrl && <ProofViewer url={proofUrl} onClose={() => setProofUrl(null)} />}
     </div>
   );
 }
