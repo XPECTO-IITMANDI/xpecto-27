@@ -9,7 +9,19 @@ import { useEffect, useState, useRef } from 'react';
  * - Analog static snow canvas
  * - Horizontal scan glitches and chromatic aberration
  */
-const MAIN_PAGES = new Set(['about', 'events', 'workshops', 'sponsors', 'team']);
+const MAIN_PAGES = new Set([
+  'about',
+  'events',
+  'workshops',
+  'accommodation',
+  'sponsors',
+  'team',
+  'campus-ambassador',
+  'profile',
+  'auth',
+  'admin',
+  'home',
+]);
 
 export default function TvStaticTransition({ page, triggerKey = 0 }) {
   const [active, setActive] = useState(false);

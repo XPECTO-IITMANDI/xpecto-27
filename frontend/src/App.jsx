@@ -64,9 +64,13 @@ const routeToPage = (pathname) => {
   if (pathname === '/' || pathname.startsWith('/about')) return 'about';
   if (pathname.startsWith('/events')) return 'events';
   if (pathname.startsWith('/workshops')) return 'workshops';
+  if (pathname.startsWith('/accommodation')) return 'accommodation';
   if (pathname.startsWith('/sponsors')) return 'sponsors';
   if (pathname.startsWith('/team')) return 'team';
-  if (pathname.startsWith('/campus-ambassador')) return 'team';
+  if (pathname.startsWith('/campus-ambassador')) return 'campus-ambassador';
+  if (pathname.startsWith('/profile') || pathname.startsWith('/me')) return 'profile';
+  if (pathname.startsWith('/auth')) return 'auth';
+  if (pathname.startsWith('/admin')) return 'admin';
   return 'home';
 };
 
