@@ -15,6 +15,8 @@ pub struct User {
     pub college: String,
     #[serde(default)]
     pub state: String,
+    #[serde(default)]
+    pub email_verified: bool,
     #[serde(alias = "password_hash")]
     pub password_hash: String,
     pub role: String,
@@ -56,6 +58,18 @@ pub struct LoginInput {
     pub password: String,
 }
 
+#[derive(Debug, Deserialize)]
+pub struct ForgotPasswordInput {
+    pub email: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ResetPasswordInput {
+    pub email: String,
+    pub otp: String,
+    pub password: String,
+}
+
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct UserView {
@@ -65,6 +79,7 @@ pub struct UserView {
     pub phone: String,
     pub college: String,
     pub state: String,
+    pub email_verified: bool,
     pub role: String,
 }
 
@@ -77,6 +92,7 @@ impl User {
             phone: self.phone.clone(),
             college: self.college.clone(),
             state: self.state.clone(),
+            email_verified: self.email_verified,
             role: self.role.clone(),
         }
     }

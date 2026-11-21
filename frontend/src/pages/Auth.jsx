@@ -3,6 +3,7 @@ import { Navigate, useLocation, useNavigate } from 'react-router';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import GlitchText from '../components/GlitchText';
+import api from '../api';
 import { INDIA_STATES, INSTITUTIONS_BY_STATE } from '../data/institutions';
 
 const FIELDS = {
@@ -39,6 +40,9 @@ export default function Auth() {
   const [busy, setBusy] = useState(false);
   const [show, setShow] = useState(false);
   const [otherInstitution, setOtherInstitution] = useState('');
+  const [otp, setOtp] = useState('');
+  const [resetMode, setResetMode] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
   const tabs = useRef([]);
 
   if (user) return <Navigate to={from} replace />; // already signed in
@@ -50,12 +54,46 @@ export default function Auth() {
   };
   const submit = async ev => {
     ev.preventDefault(); setServer('');
-    const e = validate(mode, v); setErrs(e);
-    if (Object.keys(e).length) return;
+    if (resetMode) {
+      if (!resetSent) {
+        if (!/^\S+@\S+\.\S+$/.test(v.email)) {
+          setServer('Enter a valid email address.');
+          return;
+        }
+      } else {
+        if (!/^\d{6}$/.test(otp)) {
+          setServer('Enter the 6-digit reset OTP.');
+          return;
+        }
+        if (v.password.length < 8) {
+          setServer('Use at least 8 characters for the new password.');
+          return;
+        }
+      }
+    }
+    if (!resetMode) {
+      const e = validate(mode, v); setErrs(e);
+      if (Object.keys(e).length) return;
+    } else {
+      setErrs({});
+    }
     setBusy(true);
     try {
-      if (mode === 'login') await login({ email: v.email.trim(), password: v.password });
-      else await signup({
+      if (resetMode) {
+        if (!resetSent) {
+          await api.forgotPassword(v.email.trim());
+          setResetSent(true);
+          setServer('If the account exists, a password reset OTP was sent.');
+        } else {
+          await api.resetPassword({ email: v.email.trim(), otp: otp.trim(), password: v.password });
+          toast.success('Password reset successfully');
+          setResetMode(false);
+          setResetSent(false);
+          setOtp('');
+        }
+      } else if (mode === 'login') await login({ email: v.email.trim(), password: v.password });
+      else {
+        await signup({
         ...v,
         name: v.name.trim(),
         email: v.email.trim(),
@@ -63,10 +101,24 @@ export default function Auth() {
         state: v.state,
         college: (v.college === '__other__' ? otherInstitution : v.college).trim(),
       });
-      toast.success(mode === 'login' ? 'Welcome back!' : 'Account created!');
-      navigate(from, { replace: true }); // back to the event/workshop they came from
+        toast.success('Account created!');
+        navigate(from, { replace: true });
+        return;
+      }
+      if (!resetMode) {
+        toast.success('Welcome back!');
+        navigate(from, { replace: true });
+      }
     } catch (x) {
-      setServer(x.code === 'UNAUTHENTICATED' ? 'Wrong email or password.' : x.code === 'VALIDATION' ? x.message : x.message || 'Something went wrong.');
+      setServer(
+        x.code === 'UNAUTHENTICATED'
+          ? (resetMode ? x.message : 'Wrong email or password.')
+          : x.code === 'CONFLICT'
+            ? x.message
+            : x.code === 'RATE_LIMITED'
+              ? x.message
+              : x.message || 'Something went wrong.'
+      );
     } finally { setBusy(false); }
   };
 
@@ -81,6 +133,26 @@ export default function Auth() {
           ))}
         </div>
         <form id="auth-panel" role="tabpanel" aria-labelledby={`tab-${mode}`} onSubmit={submit} noValidate>
+          {resetMode && (
+            <>
+              <div className="field">
+                <label htmlFor="reset-email">Email</label>
+                <input id="reset-email" type="email" value={v.email} onChange={e => setV({ ...v, email: e.target.value })} />
+              </div>
+              {resetSent && (
+                <>
+                  <div className="field"><label htmlFor="reset-otp">Reset OTP</label><input id="reset-otp" type="text" inputMode="numeric" maxLength={6} value={otp} onChange={e => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))} /></div>
+                  <div className="field"><label htmlFor="reset-password">New password</label><input id="reset-password" type="password" value={v.password} onChange={e => setV({ ...v, password: e.target.value })} autoComplete="new-password" /></div>
+                </>
+              )}
+              <button type="button" className="link-btn" onClick={() => { setResetMode(false); setResetSent(false); setOtp(''); setServer(''); }}>Back to login</button>
+            </>
+          )}
+          {!resetMode && mode === 'login' && (
+            <button type="button" className="link-btn" onClick={() => { setResetMode(true); setServer(''); }}>Forgot password?</button>
+          )}
+          {!resetMode && (
+          <>
           {mode === 'signup' && (
             <>
               <div className="field">
@@ -137,8 +209,12 @@ export default function Auth() {
               {errs[k] && <span id={`e-${k}`} className="err" role="alert">{errs[k]}</span>}
             </div>
           ))}
+          </>
+          )}
           {server && <p className="banner-err" role="alert">{server}</p>}
-          <button className="btn-slash" type="submit" disabled={busy}>{busy ? 'Please wait…' : mode === 'login' ? 'Login' : 'Create account'}</button>
+          <button className="btn-slash" type="submit" disabled={busy}>
+            {busy ? 'Please wait…' : resetMode ? (resetSent ? 'Reset password' : 'Send reset OTP') : mode === 'login' ? 'Login' : 'Create account'}
+          </button>
         </form>
       </div></div>
     </section>

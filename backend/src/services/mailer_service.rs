@@ -13,6 +13,52 @@ use tracing::{info, warn};
 
 use crate::models::registration::RegistrationView;
 
+pub async fn send_otp_email(to_email: &str, to_name: &str, otp: &str, purpose: &str) -> anyhow::Result<()> {
+    let Some(cfg) = MailConfig::from_env() else {
+        return Err(anyhow::anyhow!("SMTP is not configured"));
+    };
+    let subject = if purpose == "password-reset" {
+        "XPECTO password reset OTP"
+    } else {
+        "Verify your XPECTO email"
+    };
+    let heading = if purpose == "password-reset" {
+        "Password reset"
+    } else {
+        "Email verification"
+    };
+    let frequency_notice = if purpose == "password-reset" {
+        "\nYou can successfully reset your password only once every 24 hours."
+    } else {
+        ""
+    };
+    let text = format!(
+        "{} OTP: {}\nThis OTP expires in 10 minutes and can only be used once.{}",
+        heading, otp, frequency_notice
+    );
+    let html = format!(
+        "<div style=\"font-family:Arial,sans-serif\"><h2>XPECTO {heading}</h2><p>Hello {name},</p><p>Your OTP is:</p><h1 style=\"letter-spacing:.25em\">{otp}</h1><p>This OTP expires in 10 minutes and can only be used once.</p>{frequency_notice_html}</div>",
+        heading = heading,
+        name = to_name,
+        otp = otp,
+        frequency_notice_html = if purpose == "password-reset" {
+            "<p><strong>You can successfully reset your password only once every 24 hours.</strong></p>"
+        } else {
+            ""
+        },
+    );
+    match send(&cfg, to_email, to_name, subject, text, html).await {
+        Ok(()) => {
+            info!("{} OTP email sent to {}", purpose, to_email);
+            Ok(())
+        }
+        Err(e) => {
+            warn!("failed to send {} OTP email to {}: {}", purpose, to_email, e);
+            Err(e)
+        }
+    }
+}
+
 struct MailConfig {
     host: String,
     port: u16,
@@ -25,13 +71,40 @@ struct MailConfig {
     contact_email: String,
 }
 
+fn load_env_fallback() {
+    let candidates = [
+        std::env::current_dir().ok().map(|p| p.join(".env")),
+        std::env::current_dir().ok().map(|p| p.join("backend").join(".env")),
+    ];
+    let Some(path) = candidates.iter().flatten().find(|p| p.is_file()) else {
+        return;
+    };
+    let Ok(content) = std::fs::read_to_string(path) else {
+        return;
+    };
+    for line in content.lines() {
+        let line = line.trim();
+        if line.is_empty() || line.starts_with('#') {
+            continue;
+        }
+        let Some((key, value)) = line.split_once('=') else {
+            continue;
+        };
+        if std::env::var(key).is_err() {
+            std::env::set_var(key.trim(), value.trim().trim_matches('"').trim_matches('\''));
+        }
+    }
+}
+
 impl MailConfig {
     /// Returns None when SMTP_HOST / SMTP_USERNAME / SMTP_PASSWORD are not all set.
     fn from_env() -> Option<Self> {
+        let _ = dotenvy::dotenv();
+        load_env_fallback();
         let get = |k: &str| std::env::var(k).ok().map(|v| v.trim().to_string()).filter(|v| !v.is_empty());
         let host = get("SMTP_HOST")?;
         let username = get("SMTP_USERNAME")?;
-        let password = get("SMTP_PASSWORD")?;
+        let password = get("SMTP_APP_PASSWORD").or_else(|| get("SMTP_PASSWORD"))?;
         Some(Self {
             host,
             port: get("SMTP_PORT").and_then(|v| v.parse().ok()).unwrap_or(587),

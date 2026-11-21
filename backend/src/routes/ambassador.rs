@@ -3,10 +3,11 @@ use axum::Router;
 
 use crate::handlers::ambassador_handler;
 use crate::middleware::AppState;
+use crate::middleware::rate_limit::public_write_limiter;
 
 pub fn routes(state: AppState) -> Router {
     Router::new()
-        .route("/campus-ambassadors", post(ambassador_handler::create_ambassador))
+        .route("/campus-ambassadors", post(ambassador_handler::create_ambassador).route_layer(axum::middleware::from_fn(public_write_limiter)))
         .with_state(state.clone())
         .merge(
             Router::new()

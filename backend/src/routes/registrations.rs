@@ -6,6 +6,7 @@ use axum::Router;
 use crate::handlers::registration_handler;
 use crate::middleware::auth::require_auth;
 use crate::middleware::AppState;
+use crate::middleware::rate_limit::public_write_limiter;
 
 pub fn routes(state: AppState) -> Router {
     Router::new()
@@ -14,7 +15,8 @@ pub fn routes(state: AppState) -> Router {
         .route(
             "/registrations",
             post(registration_handler::create_registration)
-                .layer(DefaultBodyLimit::max(6 * 1024 * 1024)),
+                .layer(DefaultBodyLimit::max(6 * 1024 * 1024))
+                .route_layer(middleware::from_fn(public_write_limiter)),
         )
         .route("/registrations/me", get(registration_handler::my_registrations))
         .route_layer(middleware::from_fn_with_state(state.clone(), require_auth))

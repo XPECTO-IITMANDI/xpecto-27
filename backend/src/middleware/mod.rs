@@ -1,5 +1,6 @@
 pub mod auth;
 pub mod admin;
+pub mod rate_limit;
 
 use axum::extract::FromRef;
 use crate::database::AppDatabase;

@@ -111,6 +111,8 @@ const api = {
   login:  b => http.post('/api/auth/login', b).then(v => normUser(unwrapUser(v))),
   logout: () => http.post('/api/auth/logout'),
   me:     () => http.get('/api/auth/me').then(v => normUser(unwrapUser(v))),
+  forgotPassword: email => http.post('/api/auth/forgot-password', { email }),
+  resetPassword: b => http.post('/api/auth/reset-password', b),
 
   getFest:        () => http.get('/api/fest').then(v => normFest(unwrapFest(v))).catch(e => { if (e.status === 404) return null; throw e; }),
   getEvents:      () => http.get('/api/events').then(mapList(normEvent)),
