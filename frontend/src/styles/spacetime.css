@@ -228,6 +228,18 @@ h1, h2, h3, h4, .st-hero-title, .st-page-title, .sec-title, .st-nav-logo, .st-se
 .st-sponsor-card:hover { border-color: rgba(0,255,136,0.35); box-shadow: 0 0 12px rgba(0,255,136,0.08); transform: translateY(-2px); }
 .st-sponsor-card-name { display: block; max-width: 100%; overflow-wrap: anywhere; text-align: center; line-height: 1.25; }
 .st-sponsor-card-logo { display: block; width: 100%; max-width: 100%; height: 7rem; object-fit: contain; }
+.st-sponsor-tier-title .st-sponsor-card { width: min(100%, 22rem); min-height: 15rem; }
+.st-sponsor-tier-title .st-sponsor-card-logo { height: 10rem; }
+.st-sponsor-tier-diamond .st-sponsor-card { width: min(100%, 20rem); min-height: 14rem; }
+.st-sponsor-tier-diamond .st-sponsor-card-logo { height: 9rem; }
+.st-sponsor-tier-gold .st-sponsor-card { width: min(100%, 18rem); min-height: 13rem; }
+.st-sponsor-tier-gold .st-sponsor-card-logo { height: 8rem; }
+.st-sponsor-tier-silver .st-sponsor-card { width: min(100%, 16rem); min-height: 12rem; }
+.st-sponsor-tier-silver .st-sponsor-card-logo { height: 7rem; }
+.st-sponsor-tier-bronze .st-sponsor-card { width: min(100%, 14rem); min-height: 11rem; }
+.st-sponsor-tier-bronze .st-sponsor-card-logo { height: 6rem; }
+.st-sponsor-tier-partner .st-sponsor-card { width: min(100%, 12rem); min-height: 9rem; }
+.st-sponsor-tier-partner .st-sponsor-card-logo { height: 5rem; }
 
 /* ---- Page Transitions ---- */
 .st-page-enter { animation: stPageIn .2s ease-out; }

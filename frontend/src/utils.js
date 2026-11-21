@@ -23,7 +23,7 @@ export const TEAM_ROLE_ORDER = [
   'Member',
 ];
 
-export const SPONSOR_TIER_ORDER = ['Title', 'Gold', 'Diamond', 'Silver', 'Partner'];
+export const SPONSOR_TIER_ORDER = ['Title', 'Diamond', 'Gold', 'Silver', 'Bronze', 'Partner'];
 
 export const compareByPreferredOrder = (order, a, b) => {
   const rank = value => order.findIndex(item => item.toLowerCase() === value.toLowerCase());

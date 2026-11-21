@@ -305,7 +305,8 @@
 .mess-opt .mess-pic { max-width: 46%; max-height: 22%; object-fit: contain; border-radius: 6px; }
 
 /* --- Profile page --- */
-.profile-details { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem 2rem; margin: 0; }
+.profile-details { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.2rem 2rem; margin: 0; padding: 1.25rem 1.25rem 1.8rem; box-sizing: border-box; }
+.profile-details > div { min-width: 0; overflow-wrap: anywhere; }
 .profile-details dt { font-size: .78rem; letter-spacing: .12em; text-transform: uppercase; color: var(--volt, #ffd60a); }
 .profile-details dd { margin: .15rem 0 0; font-size: 1.05rem; word-break: break-word; }
 .pay-summary { display: flex; flex-wrap: wrap; gap: 1rem 2.5rem; margin: .6rem 0 1rem; }

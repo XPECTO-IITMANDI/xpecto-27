@@ -43,6 +43,13 @@ export default function Sponsors() {
     );
   }
 
+  const tierClass = tier => {
+    const normalized = String(tier).trim().toLowerCase();
+    return ['title', 'diamond', 'gold', 'silver', 'bronze', 'partner'].includes(normalized)
+      ? `st-sponsor-tier-${normalized}`
+      : 'st-sponsor-tier-partner';
+  };
+
   return (
     <section className="page st-page-enter st-sponsors">
       {isAdmin && (
@@ -62,7 +69,7 @@ export default function Sponsors() {
       </div>
 
       {groups.length === 0 ? <p>No sponsors yet.</p> : groups.map(([tier, sponsors]) => (
-        <section className="st-sponsor-group" key={tier}>
+        <section className={`st-sponsor-group ${tierClass(tier)}`} key={tier}>
           <h2 className="st-sponsor-group-title">{tier}</h2>
           <div className="st-sponsor-grid">
             {sponsors.map((sponsor) => (
