@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router';
 import api from '../../api';
 import StatusBadge from '../../components/StatusBadge';
 import { useAdminError } from './util';
@@ -6,11 +7,17 @@ import { useAdminError } from './util';
 /** Desk check: enter the registration ID shown on the participant's ticket/QR.
  *  The server looks it up live, so a forged or edited QR image can't pass. */
 export default function VerifyTab() {
+  const [params] = useSearchParams();
   const [id, setId] = useState('');
   const [res, setRes] = useState(null);
   const [notFound, setNotFound] = useState(false);
   const [busy, setBusy] = useState(false);
   const fail = useAdminError();
+
+  useEffect(() => {
+    const fromQr = params.get('verify');
+    if (fromQr) setId(fromQr);
+  }, [params]);
 
   const check = async e => {
     e.preventDefault();

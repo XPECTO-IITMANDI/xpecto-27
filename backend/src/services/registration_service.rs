@@ -735,10 +735,43 @@ fn is_duplicate_key(e: &mongodb::error::Error) -> bool {
     msg.contains("E11000") || msg.contains("duplicate key")
 }
 
-fn generate_qr_url(id: &str) -> String {
-    let svg = r##"<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><rect width="200" height="200" fill="#fff"/><text x="100" y="90" text-anchor="middle" font-size="16" font-weight="bold" fill="#000">XPECTO</text><text x="100" y="115" text-anchor="middle" font-size="11" font-family="monospace" fill="#000">{}</text></svg>"##;
-    let svg = svg.replace("{}", &id);
-    format!("data:image/svg+xml;utf8,{}", url_encode(&svg))
+pub(crate) fn generate_qr_url(id: &str) -> String {
+    let front = std::env::var("CORS_ORIGIN").unwrap_or_else(|_| "http://localhost:5173".into());
+    let payload = format!("{}/admin?tab=verify&verify={}", front.trim_end_matches('/'), id);
+    generate_qr_png_data_url(&payload).unwrap_or_default()
+}
+
+fn generate_qr_png_data_url(payload: &str) -> Option<String> {
+    use base64::{engine::general_purpose::STANDARD, Engine as _};
+    use image::{Luma, ImageEncoder};
+    use qrcode::QrCode;
+
+    let code = QrCode::new(payload.as_bytes()).ok()?;
+    let module_count = code.width();
+    let scale = 8usize;
+    let border = 4usize;
+    let size = (module_count + border * 2) * scale;
+    let mut pixels = vec![255u8; size * size];
+    for (y, row) in code.to_colors().chunks(module_count).enumerate() {
+        for (x, color) in row.iter().enumerate() {
+            let dark = matches!(color, qrcode::Color::Dark);
+            if dark {
+                let left = (x + border) * scale;
+                let top = (y + border) * scale;
+                for py in top..top + scale {
+                    for px in left..left + scale {
+                        let i = py * size + px;
+                        pixels[i] = 0;
+                    }
+                }
+            }
+        }
+    }
+    let mut png = Vec::new();
+    image::codecs::png::PngEncoder::new(&mut png)
+        .write_image(&pixels, size as u32, size as u32, image::ExtendedColorType::L8)
+        .ok()?;
+    Some(format!("data:image/png;base64,{}", STANDARD.encode(png)))
 }
 
 fn url_encode(s: &str) -> String {

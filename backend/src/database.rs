@@ -25,6 +25,7 @@ pub struct AppDatabase {
     pub accommodation_registrations: Collection<Document>,
     pub transactions: Collection<Document>, // global transaction-ID guard
     pub user_qrs: Collection<Document>,
+    pub notices: Collection<Document>,
 }
 
 impl Clone for AppDatabase {
@@ -47,6 +48,7 @@ impl Clone for AppDatabase {
             accommodation_registrations: self.accommodation_registrations.clone(),
             transactions: self.transactions.clone(),
             user_qrs: self.user_qrs.clone(),
+            notices: self.notices.clone(),
         }
     }
 }
@@ -77,6 +79,7 @@ impl AppDatabase {
             accommodation_registrations: db.collection("accommodation_registrations"),
             transactions: db.collection("transactions"),
             user_qrs: db.collection("user_qrs"),
+            notices: db.collection("notices"),
         };
         db.ensure_indexes().await?;
         Ok(db)
@@ -112,6 +115,7 @@ impl AppDatabase {
             .create_index(unique_idx(doc! { "email": 1 }), None)
             .await?;
         self.user_qrs.create_index(idx(doc! { "user_id": 1, "kind": 1 }), None).await?;
+        self.notices.create_index(idx(doc! { "priority": -1, "created_at": -1 }), None).await?;
         self.ambassadors
             .create_index(unique_idx(doc! { "email": 1 }), None)
             .await?;

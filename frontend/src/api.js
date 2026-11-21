@@ -122,6 +122,10 @@ const api = {
   getSponsors:    () => http.get('/api/sponsors').then(mapList(normSponsor)),
   getMessOptions: () => http.get('/api/messoptions').then(mapList(normMess)),
   getPaymentInfo: () => http.get('/api/payment-info').then(v => normPayment(unwrapPayment(v))).catch(e => { if (e.status === 404) return null; throw e; }),
+  getNotices:     () => http.get('/api/notices').then(v => toList(v?.notices).map(n => ({
+    id: str(n.id), title: str(n.title), message: str(n.message), link: str(n.link),
+    priority: num(n.priority), createdAt: str(n.createdAt),
+  }))),
   myQrs:          () => http.get('/api/auth/qrs/me').then(v => toList(v?.qrs).map(q => ({
     id: str(q.id), kind: str(q.kind), label: str(q.label), qrUrl: str(q.qrUrl),
   }))),
@@ -195,6 +199,15 @@ const api = {
       }))),
       create: body => http.post('/api/admin/qrs', body),
       remove: id => http.delete(`/api/admin/qrs/${encodeURIComponent(id)}`),
+    },
+    notices: {
+      list: () => http.get('/api/admin/notices').then(v => toList(v?.notices).map(n => ({
+        id: str(n.id), title: str(n.title), message: str(n.message), link: str(n.link),
+        priority: num(n.priority), active: n.active !== false, expiresAt: str(n.expiresAt),
+      }))),
+      create: body => http.post('/api/admin/notices', body),
+      update: (id, body) => http.put(`/api/admin/notices/${encodeURIComponent(id)}`, body),
+      remove: id => http.delete(`/api/admin/notices/${encodeURIComponent(id)}`),
     },
 
     ambassadors:      params      => http.get('/api/admin/campus-ambassadors', { params }).then(mapList(normAmbassador)),

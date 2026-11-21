@@ -14,5 +14,6 @@ pub fn routes(state: AppState) -> Router {
         .route("/sponsors", get(public_handler::get_sponsors))
         .route("/messoptions", get(public_handler::get_mess_options))
         .route("/payment-info", get(public_handler::get_payment_info))
+        .route("/notices", get(public_handler::get_notices))
         .with_state(state)
 }

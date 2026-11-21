@@ -513,14 +513,40 @@ pub async fn admin_add_qr(
     let email = body.get("email").and_then(|v| v.as_str()).unwrap_or("").trim().to_string();
     let kind = body.get("kind").and_then(|v| v.as_str()).unwrap_or("").trim().to_lowercase();
     let label = body.get("label").and_then(|v| v.as_str()).unwrap_or("").trim().to_string();
-    let qr_url = body.get("qrUrl").and_then(|v| v.as_str()).unwrap_or("").trim().to_string();
-    if email.is_empty() || !["mess", "event"].contains(&kind.as_str()) || label.is_empty() || qr_url.is_empty() {
-        return Err(AppError::Validation("Email, kind, label and QR image are required.".into()));
+    if email.is_empty() || !["mess", "event"].contains(&kind.as_str()) || label.is_empty() {
+        return Err(AppError::Validation("Email, kind and label are required.".into()));
     }
     let user = state.db.users.find_one(mongodb::bson::doc! { "email": &email }, None).await
         .map_err(|e| AppError::Internal(e.to_string()))?
         .ok_or_else(|| AppError::Validation("No account exists with that email.".into()))?;
     let user_id = user.get_object_id("_id").map_err(|e| AppError::Internal(e.to_string()))?;
+    let mut registration_id: Option<ObjectId> = None;
+    for collection in [
+        &state.db.event_registrations,
+        &state.db.workshop_registrations,
+        &state.db.accommodation_registrations,
+        &state.db.registrations,
+    ] {
+        let doc = collection.find_one(
+            doc! {
+                "user_id": user_id,
+                "status": "approved",
+                "kind": kind.clone(),
+                "$or": [
+                    { "target_name": &label },
+                    { "mess_name": &label },
+                ]
+            },
+            None,
+        ).await.map_err(|e| AppError::Internal(e.to_string()))?;
+        if let Some(doc) = doc {
+            registration_id = doc.get_object_id("_id").ok();
+            break;
+        }
+    }
+    let registration_id = registration_id
+        .ok_or_else(|| AppError::Validation("No approved matching event or mess registration exists for this user.".into()))?;
+    let qr_url = crate::services::registration_service::generate_qr_url(&registration_id.to_hex());
     let now = crate::database::now();
     let result = state.db.user_qrs.insert_one(mongodb::bson::doc! {
         "user_id": user_id,
@@ -542,6 +568,116 @@ pub async fn admin_remove_qr(
     require(&_current_user)?;
     let oid = oid_from_hex(&id).map_err(|e| AppError::Validation(e.to_string()))?;
     state.db.user_qrs.delete_one(mongodb::bson::doc! { "_id": oid }, None).await
+        .map_err(|e| AppError::Internal(e.to_string()))?;
+    Ok(Json(json!({ "ok": true })))
+}
+
+// --- notices ---
+
+fn notice_json(d: &mongodb::bson::Document) -> serde_json::Value {
+    json!({
+        "id": d.get_object_id("_id").ok().map(|v| v.to_hex()).unwrap_or_default(),
+        "title": d.get_str("title").unwrap_or(""),
+        "message": d.get_str("message").unwrap_or(""),
+        "link": d.get_str("link").unwrap_or(""),
+        "priority": d.get_i32("priority").unwrap_or(d.get_i64("priority").unwrap_or(0) as i32),
+        "active": d.get_bool("active").unwrap_or(true),
+        "expiresAt": d.get_datetime("expires_at").ok().map(|v| v.to_rfc3339_string()).unwrap_or_default(),
+    })
+}
+
+pub async fn admin_list_notices(
+    State(state): State<AppState>,
+    Extension(_current_user): Extension<CurrentUser>,
+) -> Result<Json<serde_json::Value>, crate::errors::AppError> {
+    require(&_current_user)?;
+    let mut cursor = state.db.notices.find(mongodb::bson::doc! {}, None).await
+        .map_err(|e| crate::errors::AppError::Internal(e.to_string()))?;
+    let mut notices = Vec::new();
+    while cursor.advance().await.map_err(|e| crate::errors::AppError::Internal(e.to_string()))? {
+        notices.push(notice_json(&cursor.deserialize_current().map_err(|e| crate::errors::AppError::Internal(e.to_string()))?));
+    }
+    Ok(Json(json!({ "notices": notices })))
+}
+
+pub async fn admin_add_notice(
+    State(state): State<AppState>,
+    Extension(_current_user): Extension<CurrentUser>,
+    axum::extract::Json(body): axum::extract::Json<serde_json::Value>,
+) -> Result<impl IntoResponse, crate::errors::AppError> {
+    require(&_current_user)?;
+    let title = body.get("title").and_then(|v| v.as_str()).unwrap_or("").trim().to_string();
+    let message = body.get("message").and_then(|v| v.as_str()).unwrap_or("").trim().to_string();
+    if title.is_empty() || message.is_empty() {
+        return Err(AppError::Validation("Title and message are required.".into()));
+    }
+    let link = body.get("link").and_then(|v| v.as_str()).unwrap_or("").trim().to_string();
+    let priority = body.get("priority").and_then(|v| v.as_i64()).unwrap_or(0);
+    let active = body.get("active").and_then(|v| v.as_bool()).unwrap_or(true);
+    let expires_at = parse_optional_datetime(body.get("expiresAt").and_then(|v| v.as_str()).unwrap_or(""));
+    let now = crate::database::now();
+    let mut doc = mongodb::bson::doc! {
+        "title": title.clone(),
+        "message": message.clone(),
+        "link": link.clone(),
+        "priority": priority,
+        "active": active,
+        "created_at": now,
+        "updated_at": now,
+    };
+    if let Some(expires) = expires_at { doc.insert("expires_at", expires); }
+    let result = state.db.notices.insert_one(doc, None).await
+        .map_err(|e| crate::errors::AppError::Internal(e.to_string()))?;
+    let id = result.inserted_id.as_object_id().unwrap_or_default();
+    Ok(Json(json!({ "notice": { "id": id.to_hex(), "title": title, "message": message, "link": link, "priority": priority, "active": active } })))
+}
+
+fn parse_optional_datetime(value: &str) -> Option<mongodb::bson::DateTime> {
+    if value.trim().is_empty() { return None; }
+    chrono::DateTime::parse_from_rfc3339(value)
+        .ok()
+        .map(|d| mongodb::bson::DateTime::from_millis(d.timestamp_millis()))
+}
+
+pub async fn admin_update_notice(
+    State(state): State<AppState>,
+    Extension(_current_user): Extension<CurrentUser>,
+    Path(id): Path<String>,
+    axum::extract::Json(body): axum::extract::Json<serde_json::Value>,
+) -> Result<impl IntoResponse, crate::errors::AppError> {
+    require(&_current_user)?;
+    let oid = oid_from_hex(&id).map_err(|e| AppError::Validation(e.to_string()))?;
+    let title = body.get("title").and_then(|v| v.as_str()).unwrap_or("").trim().to_string();
+    let message = body.get("message").and_then(|v| v.as_str()).unwrap_or("").trim().to_string();
+    if title.is_empty() || message.is_empty() {
+        return Err(AppError::Validation("Title and message are required.".into()));
+    }
+    let mut set = mongodb::bson::doc! {
+        "title": title,
+        "message": message,
+        "link": body.get("link").and_then(|v| v.as_str()).unwrap_or("").trim(),
+        "priority": body.get("priority").and_then(|v| v.as_i64()).unwrap_or(0),
+        "active": body.get("active").and_then(|v| v.as_bool()).unwrap_or(true),
+        "updated_at": crate::database::now(),
+    };
+    if let Some(expires) = parse_optional_datetime(body.get("expiresAt").and_then(|v| v.as_str()).unwrap_or("")) {
+        set.insert("expires_at", expires);
+    } else {
+        set.insert("expires_at", mongodb::bson::Bson::Null);
+    }
+    state.db.notices.update_one(mongodb::bson::doc! { "_id": oid }, mongodb::bson::doc! { "$set": set }, None).await
+        .map_err(|e| AppError::Internal(e.to_string()))?;
+    Ok(Json(json!({ "ok": true })))
+}
+
+pub async fn admin_remove_notice(
+    State(state): State<AppState>,
+    Extension(_current_user): Extension<CurrentUser>,
+    Path(id): Path<String>,
+) -> Result<impl IntoResponse, crate::errors::AppError> {
+    require(&_current_user)?;
+    let oid = oid_from_hex(&id).map_err(|e| AppError::Validation(e.to_string()))?;
+    state.db.notices.delete_one(mongodb::bson::doc! { "_id": oid }, None).await
         .map_err(|e| AppError::Internal(e.to_string()))?;
     Ok(Json(json!({ "ok": true })))
 }

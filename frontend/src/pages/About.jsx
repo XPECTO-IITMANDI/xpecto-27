@@ -34,8 +34,13 @@ export default function About() {
   const load = useCallback(() => {
     setError(null);
     setData(null);
-    Promise.all([api.getFest(), api.getEvents(), api.getWorkshops()])
-      .then(([fest, events, workshops]) => setData({ fest, events, workshops }))
+    Promise.all([
+      api.getFest(),
+      api.getEvents(),
+      api.getWorkshops(),
+      api.getNotices().catch(() => []),
+    ])
+      .then(([fest, events, workshops, notices]) => setData({ fest, events, workshops, notices }))
       .catch(e => setError(e.message));
   }, []);
 
@@ -59,7 +64,7 @@ export default function About() {
     );
   }
 
-  const { fest, events, workshops } = data;
+  const { fest, events, workshops, notices } = data;
   const days = istDayCount(fest.startDate, fest.endDate);
   const ticker = [...events.map(e => e.name), ...workshops.map(w => w.title)];
   const stats = [
@@ -74,6 +79,28 @@ export default function About() {
       {/* Hero — Matches the last snapshot of the 3D Multiverse Intro */}
       <header className="st-hero">
         {isAdmin && <Link to="/admin?tab=fest" className="edit-pencil" aria-label="Edit fest info">✎</Link>}
+
+        {(notices || []).length > 0 && (
+        <aside className="notice-board" aria-label="XPECTO notices">
+            <div className="notice-board-header">
+              <span className="notice-board-light" />
+              <h2>NOTICE BOARD</h2>
+              <span className="notice-board-light" />
+            </div>
+            <div className="notice-board-list">
+              {(notices || []).map(notice => (
+                <article className={`notice-pin ${notice.priority >= 2 ? 'notice-important' : ''}`} key={notice.id}>
+                  <span className="notice-pin-dot" />
+                  <div>
+                    <h3>{notice.title}</h3>
+                    <p>{notice.message}</p>
+                    {notice.link && <a href={notice.link} target="_blank" rel="noreferrer">Open link</a>}
+                  </div>
+                </article>
+              ))}
+            </div>
+        </aside>
+        )}
 
         {/* Main Title - Matches Intro Arrival */}
         <h1 className="st-hero-title">

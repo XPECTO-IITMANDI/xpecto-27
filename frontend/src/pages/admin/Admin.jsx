@@ -25,8 +25,16 @@ const TEAM = [T('name', 'Name', 'text', { required: true }), T('role', 'Role', '
 const SPONSOR = [T('name', 'Name', 'text', { required: true }), T('tier', 'Tier', 'select', { options: SPONSOR_TIER_ORDER, required: true }), T('logoUrl', 'Logo', 'image'), T('websiteUrl', 'Website', 'url')];
 const MESS = [T('name', 'Name', 'text', { required: true }), T('description', 'Description', 'textarea'), T('price', 'Price (₹)', 'number'), T('imageUrl', 'Image', 'image')];
 const PAYMENT = [T('qrImageUrl', 'Payment QR image', 'image'), T('upiId', 'UPI ID', 'text', { required: true }), T('note', 'Note shown to users', 'textarea')];
+const NOTICE = [
+  T('title', 'Title', 'text', { required: true }),
+  T('message', 'Message', 'textarea', { required: true }),
+  T('link', 'Optional link', 'url'),
+  T('priority', 'Priority (0-5)', 'number'),
+  T('active', 'Published', 'checkbox'),
+  T('expiresAt', 'Expiry', 'datetime'),
+];
 
-const TABS = [['fest', 'Fest Info'], ['events', 'Events'], ['workshops', 'Workshops'], ['team', 'Team'], ['sponsors', 'Sponsors'], ['mess', 'Mess Options'], ['qrs', 'QRs'], ['payment', 'Payment QR'], ['register', 'Register Person'], ['ambassadors', 'Ambassadors'], ['regs', 'Registrations'], ['messregs', 'Mess Regs'], ['verify', 'Desk Verify'], ['admins', 'Admins']];
+const TABS = [['fest', 'Fest Info'], ['notices', 'Notices'], ['events', 'Events'], ['workshops', 'Workshops'], ['team', 'Team'], ['sponsors', 'Sponsors'], ['mess', 'Mess Options'], ['qrs', 'QRs'], ['payment', 'Payment QR'], ['register', 'Register Person'], ['ambassadors', 'Ambassadors'], ['regs', 'Registrations'], ['messregs', 'Mess Regs'], ['verify', 'Desk Verify'], ['admins', 'Admins']];
 
 export default function Admin() {
   const [params, setParams] = useSearchParams();
@@ -34,6 +42,14 @@ export default function Admin() {
   const panel = {
     fest: <SingleForm title="Fest info" load={api.getFest} save={api.admin.updateFest} remove={api.admin.deleteFest} fields={FEST}
       blank={{ name: '', tagline: '', startDate: '', endDate: '', venue: '', aboutHtml: '', heroImageUrl: '', contactEmail: '', contactPhone: '' }} />,
+    notices: <CrudTab
+      title="Notice"
+      load={api.admin.notices.list}
+      resource={{ update: api.admin.notices.update, create: api.admin.notices.create, remove: api.admin.notices.remove }}
+      fields={NOTICE}
+      label={x => x.title}
+      blank={{ title: '', message: '', link: '', priority: 0, active: true, expiresAt: '' }}
+    />,
     events: <CrudTab title="Event" load={api.getEvents} resource={api.admin.events} fields={EVENT} label={x => x.name} initialId={id} prepare={b => ({ ...b, slug: b.slug || slugify(b.name) })}
       blank={{ name: '', category: '', description: '', rules: '', imageUrl: '', startTime: '', endTime: '', venue: '', prizePool: 0, prizeBreakdown: [], registrationFee: 0, teamSize: { min: 1, max: 1 }, registrationOpen: true, contact: { name: '', phone: '' } }} />,
     workshops: <CrudTab title="Workshop" load={api.getWorkshops} resource={api.admin.workshops} fields={WORKSHOP} label={x => x.title} initialId={id}

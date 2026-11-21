@@ -1,14 +1,13 @@
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import api from '../../api';
-import ImageUpload from '../../components/ImageUpload';
 import { useAdminError } from './util';
 
 export default function QrsTab() {
   const fail = useAdminError();
   const [rows, setRows] = useState([]);
   const [busy, setBusy] = useState(false);
-  const [form, setForm] = useState({ email: '', kind: 'mess', label: 'Breakfast', qrUrl: '' });
+  const [form, setForm] = useState({ email: '', kind: 'mess', label: 'Breakfast' });
 
   const reload = async () => {
     try { setRows(await api.admin.qrs.list()); } catch (e) { fail(e); }
@@ -22,7 +21,7 @@ export default function QrsTab() {
     try {
       await api.admin.qrs.create(form);
       toast.success('QR assigned');
-      setForm({ email: '', kind: 'mess', label: 'Breakfast', qrUrl: '' });
+      setForm({ email: '', kind: 'mess', label: 'Breakfast' });
       await reload();
     } catch (e) { fail(e); } finally { setBusy(false); }
   };
@@ -49,13 +48,8 @@ export default function QrsTab() {
         ) : (
           <div className="field"><label htmlFor="qr-label">Event name</label><input id="qr-label" required value={form.label} onChange={e => setForm({ ...form, label: e.target.value })} placeholder="Event name" /></div>
         )}
-        <ImageUpload id="qr-image" label="QR image" onChange={async file => {
-          if (!file) { setForm(f => ({ ...f, qrUrl: '' })); return; }
-          try { setBusy(true); const uploaded = await api.admin.upload(file); setForm(f => ({ ...f, qrUrl: uploaded.url })); }
-          catch (e) { fail(e); } finally { setBusy(false); }
-        }} />
-        {form.qrUrl && <img className="upload-preview" src={form.qrUrl} alt="Assigned QR preview" />}
-        <div className="row"><button className="btn-slash" disabled={busy || !form.qrUrl}>{busy ? 'Assigning…' : 'Assign QR'}</button></div>
+        <p className="muted">A real scannable QR is generated only when the participant has an approved matching registration.</p>
+        <div className="row"><button className="btn-slash" disabled={busy}>{busy ? 'Generating…' : 'Generate QR'}</button></div>
       </form>
       <ul className="reg-list">
         {rows.map(row => (
