@@ -122,6 +122,9 @@ const api = {
   getSponsors:    () => http.get('/api/sponsors').then(mapList(normSponsor)),
   getMessOptions: () => http.get('/api/messoptions').then(mapList(normMess)),
   getPaymentInfo: () => http.get('/api/payment-info').then(v => normPayment(unwrapPayment(v))).catch(e => { if (e.status === 404) return null; throw e; }),
+  myQrs:          () => http.get('/api/auth/qrs/me').then(v => toList(v?.qrs).map(q => ({
+    id: str(q.id), kind: str(q.kind), label: str(q.label), qrUrl: str(q.qrUrl),
+  }))),
 
   createRegistration: form => http.post('/api/registrations', form).then(v => normReg(unwrapReg(v))),
   myRegistrations:    ()   => http.get('/api/registrations/me').then(mapList(normReg)),
@@ -186,6 +189,13 @@ const api = {
     removeAdmin: email   => http.delete(`/api/admin/admins/${encodeURIComponent(email)}`),
 
     exportCsvUrl: () => `${BASE}/api/admin/registrations/export.csv`,
+    qrs: {
+      list: () => http.get('/api/admin/qrs').then(v => toList(v?.qrs).map(q => ({
+        id: str(q.id), email: str(q.email), kind: str(q.kind), label: str(q.label), qrUrl: str(q.qrUrl),
+      }))),
+      create: body => http.post('/api/admin/qrs', body),
+      remove: id => http.delete(`/api/admin/qrs/${encodeURIComponent(id)}`),
+    },
 
     ambassadors:      params      => http.get('/api/admin/campus-ambassadors', { params }).then(mapList(normAmbassador)),
     decideAmbassador: (id, action) => http.patch(`/api/admin/campus-ambassadors/${id}`, { status: action }),

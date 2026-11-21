@@ -309,6 +309,10 @@
 .profile-details > div { min-width: 0; overflow-wrap: anywhere; }
 .profile-details dt { font-size: .78rem; letter-spacing: .12em; text-transform: uppercase; color: var(--volt, #ffd60a); }
 .profile-details dd { margin: .15rem 0 0; font-size: 1.05rem; word-break: break-word; }
+.qr-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem; margin: 1rem 0 2.5rem; }
+.qr-card { display: flex; flex-direction: column; align-items: center; gap: .8rem; padding: 1.25rem; border: 1px solid rgba(25,230,255,.35); background: rgba(8,6,20,.75); text-align: center; }
+.qr-card h3 { margin: 0; color: var(--fire); }
+.assigned-qr { width: min(100%, 260px); height: 260px; object-fit: contain; background: #fff; padding: .5rem; }
 .pay-summary { display: flex; flex-wrap: wrap; gap: 1rem 2.5rem; margin: .6rem 0 1rem; }
 .pay-summary div { display: grid; }
 .pay-summary b { font: 800 1.4rem 'Orbitron', sans-serif; }

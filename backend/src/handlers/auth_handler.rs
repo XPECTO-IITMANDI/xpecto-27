@@ -91,3 +91,28 @@ pub async fn me(
         "role": current_user.role,
     } })))
 }
+
+pub async fn my_qrs(
+    State(state): State<AppState>,
+    Extension(current_user): Extension<CurrentUser>,
+) -> Result<Json<serde_json::Value>, crate::errors::AppError> {
+    let user_id = mongodb::bson::oid::ObjectId::parse_str(&current_user.id)
+        .map_err(|e| crate::errors::AppError::Internal(e.to_string()))?;
+    let mut cursor = state.db.user_qrs
+        .find(mongodb::bson::doc! { "user_id": user_id }, None)
+        .await
+        .map_err(|e| crate::errors::AppError::Internal(e.to_string()))?;
+    let mut qrs = Vec::new();
+    use mongodb::bson::doc;
+    use mongodb::bson::Bson;
+    while cursor.advance().await.map_err(|e| crate::errors::AppError::Internal(e.to_string()))? {
+        let d = cursor.deserialize_current().map_err(|e| crate::errors::AppError::Internal(e.to_string()))?;
+        qrs.push(json!({
+            "id": d.get_object_id("_id").ok().map(|v| v.to_hex()).unwrap_or_default(),
+            "kind": d.get_str("kind").unwrap_or("event"),
+            "label": d.get_str("label").unwrap_or(""),
+            "qrUrl": d.get_str("qr_url").unwrap_or(""),
+        }));
+    }
+    Ok(Json(json!({ "qrs": qrs })))
+}

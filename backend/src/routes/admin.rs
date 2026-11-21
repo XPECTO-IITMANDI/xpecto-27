@@ -69,6 +69,8 @@ pub fn routes(state: AppState) -> Router {
         )
         .route("/admin/admins", get(admin_handler::admin_admins_list).post(admin_handler::admin_add_admin))
         .route("/admin/admins/{email}", delete(admin_handler::admin_remove_admin))
+        .route("/admin/qrs", get(admin_handler::admin_list_qrs).post(admin_handler::admin_add_qr))
+        .route("/admin/qrs/{id}", delete(admin_handler::admin_remove_qr))
         .route_layer(middleware::from_fn_with_state(state.clone(), require_admin))
         .with_state(state)
 }

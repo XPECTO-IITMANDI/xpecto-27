@@ -19,6 +19,7 @@ pub fn routes(state: AppState) -> Router {
         .with_state(state.clone());
     let protected = Router::new()
         .route("/me", get(auth_handler::me))
+        .route("/qrs/me", get(auth_handler::my_qrs))
         .route_layer(middleware::from_fn_with_state(state.clone(), require_auth))
         .with_state(state);
     public.merge(protected)

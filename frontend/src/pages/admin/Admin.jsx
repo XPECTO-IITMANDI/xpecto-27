@@ -7,6 +7,7 @@ import RegisterPerson from './RegisterPerson';
 import AdminsTab from './AdminsTab';
 import VerifyTab from './VerifyTab';
 import AmbassadorsTab from './AmbassadorsTab';
+import QrsTab from './QrsTab';
 import { slugify } from './util';
 import { TEAM_ROLE_ORDER, SPONSOR_TIER_ORDER } from '../../utils';
 
@@ -25,7 +26,7 @@ const SPONSOR = [T('name', 'Name', 'text', { required: true }), T('tier', 'Tier'
 const MESS = [T('name', 'Name', 'text', { required: true }), T('description', 'Description', 'textarea'), T('price', 'Price (₹)', 'number'), T('imageUrl', 'Image', 'image')];
 const PAYMENT = [T('qrImageUrl', 'Payment QR image', 'image'), T('upiId', 'UPI ID', 'text', { required: true }), T('note', 'Note shown to users', 'textarea')];
 
-const TABS = [['fest', 'Fest Info'], ['events', 'Events'], ['workshops', 'Workshops'], ['team', 'Team'], ['sponsors', 'Sponsors'], ['mess', 'Mess Options'], ['payment', 'Payment QR'], ['register', 'Register Person'], ['ambassadors', 'Ambassadors'], ['regs', 'Registrations'], ['messregs', 'Mess Regs'], ['verify', 'Desk Verify'], ['admins', 'Admins']];
+const TABS = [['fest', 'Fest Info'], ['events', 'Events'], ['workshops', 'Workshops'], ['team', 'Team'], ['sponsors', 'Sponsors'], ['mess', 'Mess Options'], ['qrs', 'QRs'], ['payment', 'Payment QR'], ['register', 'Register Person'], ['ambassadors', 'Ambassadors'], ['regs', 'Registrations'], ['messregs', 'Mess Regs'], ['verify', 'Desk Verify'], ['admins', 'Admins']];
 
 export default function Admin() {
   const [params, setParams] = useSearchParams();
@@ -42,6 +43,7 @@ export default function Admin() {
     sponsors: <CrudTab title="Sponsor" load={api.getSponsors} resource={api.admin.sponsors} fields={SPONSOR} label={x => `${x.name} (${x.tier})`} initialId={id}
       blank={{ name: '', tier: 'Silver', logoUrl: '', websiteUrl: '' }} />,
     mess: <CrudTab title="Mess option" load={api.getMessOptions} resource={api.admin.messOptions} fields={MESS} label={x => x.name} blank={{ name: '', description: '', price: 0, imageUrl: '' }} />,
+    qrs: <QrsTab />,
     payment: <SingleForm title="Payment QR & UPI" load={api.getPaymentInfo} save={api.admin.updatePayment} remove={api.admin.deletePayment} fields={PAYMENT}
       blank={{ qrImageUrl: '', upiId: '', note: '' }} />,
     register: <RegisterPerson />,

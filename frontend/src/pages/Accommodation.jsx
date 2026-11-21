@@ -1,72 +1,63 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router';
+import { Link } from 'react-router';
 import api from '../api';
 import { useAuth } from '../context/AuthContext';
 import useAsync from '../hooks/useAsync';
-import AccommodationModal from '../components/AccommodationModal';
-import StatusBadge from '../components/StatusBadge';
 import ErrorState from '../components/ErrorState';
-import { fmtDate, fmtMoney, istDayCount } from '../utils';
 
-const load = () => Promise.all([
-  api.getAccommodationInfo().catch(() => ({ pricePerDay: 300, maxDays: 7 })),
-  api.getFest().catch(() => null),
-  api.getEvents(),
-]).then(([info, fest, events]) => {
-  const span = fest?.startDate && fest?.endDate ? istDayCount(fest.startDate, fest.endDate) : 0;
-  return { ...info, festDays: span, events };
-});
+const SLOT_ORDER = ['Breakfast', 'Lunch', 'Dinner'];
 
-export default function Accommodation() {
+export default function Qrs() {
   const { user } = useAuth();
-  const navigate = useNavigate();
-  const info = useAsync(load, []);
-  const mine = useAsync(() => user ? api.myAccommodationRegistrations() : Promise.resolve([]), [user]);
-  const [open, setOpen] = useState(false);
+  const mine = useAsync(() => user ? api.myQrs() : Promise.resolve([]), [user]);
 
-  const book = () => user ? setOpen(true) : navigate('/auth', { state: { from: '/accommodation' } });
-  const d = info.data;
-  const maxDays = d ? Math.max(1, Math.min(d.maxDays, d.festDays || d.maxDays)) : 1;
-  const active = (mine.data || []).some(r => r.status !== 'rejected');
+  const mess = (mine.data || [])
+    .filter(q => q.kind.toLowerCase() === 'mess')
+    .sort((a, b) => {
+      const ai = SLOT_ORDER.findIndex(s => a.label.toLowerCase().includes(s.toLowerCase()));
+      const bi = SLOT_ORDER.findIndex(s => b.label.toLowerCase().includes(s.toLowerCase()));
+      return ai - bi;
+    });
+  const events = (mine.data || []).filter(q => q.kind.toLowerCase() === 'event');
 
   return (
-    <section className="page stay-reg">
-      <h1 className="page-title page-head">Accommodation</h1>
-      <div className="stay-hero">
-        <p>Coming to XPECTO'27 from outside? Book a stay on campus. Tell us how many days you'll be here and which events you're in, pay, and submit your transaction ID. We'll verify and confirm.</p>
-      </div>
+    <section className="page qrs-page">
+      <h1 className="page-title page-head">My QRs</h1>
 
-      {info.error ? <ErrorState message={info.error.message} onRetry={info.reload} /> : !d ? <div className="skeleton" style={{ height: 120 }} aria-busy="true" /> : (
+      {!user ? (
+        <p className="muted">Please <Link to="/auth" state={{ from: '/qrs' }}>log in</Link> to view your assigned QRs.</p>
+      ) : mine.error ? (
+        <ErrorState message={mine.error.message} onRetry={mine.reload} />
+      ) : !mine.data ? (
+        <div className="skeleton" style={{ height: 180 }} />
+      ) : (
         <>
-          <div className="stay-facts">
-            <div className="stay-fact"><b>{fmtMoney(d.pricePerDay)}</b><span>per person, per day</span></div>
-            <div className="stay-fact"><b>{maxDays}</b><span>max days per booking</span></div>
-            <div className="stay-fact"><b>UPI · NEFT · Cheque</b><span>pay any way you like</span></div>
-          </div>
-          <p className="stay-cta">
-            <button className="btn-slash" onClick={book} disabled={active}>{active ? 'Booking already submitted' : 'Register for accommodation'}</button>
-          </p>
-          {open && <AccommodationModal maxDays={maxDays} pricePerDay={d.pricePerDay} events={d.events} onClose={() => setOpen(false)} onSuccess={mine.reload} />}
+          <h2 className="sec-title">Mess QRs</h2>
+          {mess.length === 0 ? <p className="muted">No mess QRs assigned yet.</p> : (
+            <div className="qr-grid">
+              {mess.map(q => (
+                <article className="qr-card" key={q.id}>
+                  <h3>{q.label}</h3>
+                  {q.qrUrl ? <img src={q.qrUrl} alt={`${q.label} QR`} className="assigned-qr" /> : <p className="muted">QR not available.</p>}
+                  {q.qrUrl && <a className="btn-slash" href={q.qrUrl} download target="_blank" rel="noreferrer">Download QR</a>}
+                </article>
+              ))}
+            </div>
+          )}
+
+          <h2 className="sec-title">Event QRs</h2>
+          {events.length === 0 ? <p className="muted">No event QRs assigned yet.</p> : (
+            <div className="qr-grid">
+              {events.map(q => (
+                <article className="qr-card" key={q.id}>
+                  <h3>{q.label}</h3>
+                  {q.qrUrl ? <img src={q.qrUrl} alt={`${q.label} QR`} className="assigned-qr" /> : <p className="muted">QR not available.</p>}
+                  {q.qrUrl && <a className="btn-slash" href={q.qrUrl} download target="_blank" rel="noreferrer">Download QR</a>}
+                </article>
+              ))}
+            </div>
+          )}
         </>
       )}
-
-      <h2 className="sec-title">My accommodation</h2>
-      {!user ? <p>Please <Link to="/auth" state={{ from: '/accommodation' }}>log in</Link> to see your booking.</p> : mine.error ? <ErrorState message={mine.error.message} onRetry={mine.reload} />
-        : !mine.data ? <div className="skeleton" style={{ height: 90 }} /> : mine.data.length === 0 ? <p className="muted">No accommodation booked yet.</p> : (
-          <ul className="reg-list">
-            {mine.data.map(r => (
-              <li key={r.id} className="reg-row">
-                <div>
-                  <h3>{r.targetName || 'Accommodation'}</h3>
-                  <p className="muted">{fmtDate(r.createdAt)} · {fmtMoney(r.amount)} · Txn {r.transactionId}</p>
-                  {r.competitionNames.length > 0 && <p className="muted">Events: {r.competitionNames.join(', ')}</p>}
-                  {r.status === 'rejected' && r.rejectionReason && <p className="muted">Reason: {r.rejectionReason}</p>}
-                </div>
-                <StatusBadge status={r.status} />
-              </li>
-            ))}
-          </ul>
-        )}
     </section>
   );
 }

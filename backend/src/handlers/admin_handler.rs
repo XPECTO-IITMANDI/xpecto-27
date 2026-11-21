@@ -473,3 +473,75 @@ pub async fn admin_remove_admin(
     let value = serde_json::json!({ "ok": true });
     Ok(Json(value))
 }
+
+// --- assigned user QRs ---
+
+pub async fn admin_list_qrs(
+    State(state): State<AppState>,
+    Extension(_current_user): Extension<CurrentUser>,
+) -> Result<Json<serde_json::Value>, crate::errors::AppError> {
+    require(&_current_user)?;
+    let mut cursor = state.db.user_qrs.find(mongodb::bson::doc! {}, None).await
+        .map_err(|e| crate::errors::AppError::Internal(e.to_string()))?;
+    let mut qrs = Vec::new();
+    while cursor.advance().await.map_err(|e| crate::errors::AppError::Internal(e.to_string()))? {
+        let d = cursor.deserialize_current().map_err(|e| crate::errors::AppError::Internal(e.to_string()))?;
+        let user_id = d.get_object_id("user_id").ok();
+        let mut email = String::new();
+        if let Some(uid) = user_id {
+            if let Ok(Some(u)) = state.db.users.find_one(mongodb::bson::doc! { "_id": uid }, None).await {
+                email = u.get_str("email").unwrap_or("").to_string();
+            }
+        }
+        qrs.push(json!({
+            "id": d.get_object_id("_id").ok().map(|v| v.to_hex()).unwrap_or_default(),
+            "email": email,
+            "kind": d.get_str("kind").unwrap_or("event"),
+            "label": d.get_str("label").unwrap_or(""),
+            "qrUrl": d.get_str("qr_url").unwrap_or(""),
+        }));
+    }
+    Ok(Json(json!({ "qrs": qrs })))
+}
+
+pub async fn admin_add_qr(
+    State(state): State<AppState>,
+    Extension(_current_user): Extension<CurrentUser>,
+    axum::extract::Json(body): axum::extract::Json<serde_json::Value>,
+) -> Result<impl IntoResponse, crate::errors::AppError> {
+    require(&_current_user)?;
+    let email = body.get("email").and_then(|v| v.as_str()).unwrap_or("").trim().to_string();
+    let kind = body.get("kind").and_then(|v| v.as_str()).unwrap_or("").trim().to_lowercase();
+    let label = body.get("label").and_then(|v| v.as_str()).unwrap_or("").trim().to_string();
+    let qr_url = body.get("qrUrl").and_then(|v| v.as_str()).unwrap_or("").trim().to_string();
+    if email.is_empty() || !["mess", "event"].contains(&kind.as_str()) || label.is_empty() || qr_url.is_empty() {
+        return Err(AppError::Validation("Email, kind, label and QR image are required.".into()));
+    }
+    let user = state.db.users.find_one(mongodb::bson::doc! { "email": &email }, None).await
+        .map_err(|e| AppError::Internal(e.to_string()))?
+        .ok_or_else(|| AppError::Validation("No account exists with that email.".into()))?;
+    let user_id = user.get_object_id("_id").map_err(|e| AppError::Internal(e.to_string()))?;
+    let now = crate::database::now();
+    let result = state.db.user_qrs.insert_one(mongodb::bson::doc! {
+        "user_id": user_id,
+        "kind": kind.clone(),
+        "label": label.clone(),
+        "qr_url": qr_url.clone(),
+        "created_at": now,
+        "updated_at": now,
+    }, None).await.map_err(|e| AppError::Internal(e.to_string()))?;
+    let id = result.inserted_id.as_object_id().unwrap_or_default();
+    Ok(Json(json!({ "qr": { "id": id.to_hex(), "email": email, "kind": kind, "label": label, "qrUrl": qr_url } })))
+}
+
+pub async fn admin_remove_qr(
+    State(state): State<AppState>,
+    Extension(_current_user): Extension<CurrentUser>,
+    Path(id): Path<String>,
+) -> Result<impl IntoResponse, crate::errors::AppError> {
+    require(&_current_user)?;
+    let oid = oid_from_hex(&id).map_err(|e| AppError::Validation(e.to_string()))?;
+    state.db.user_qrs.delete_one(mongodb::bson::doc! { "_id": oid }, None).await
+        .map_err(|e| AppError::Internal(e.to_string()))?;
+    Ok(Json(json!({ "ok": true })))
+}

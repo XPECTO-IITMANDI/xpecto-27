@@ -8,7 +8,7 @@ const About = lazy(() => import('./pages/About'));
 const Events = lazy(() => import('./pages/Events'));
 const EventDetail = lazy(() => import('./pages/EventDetail'));
 const Workshops = lazy(() => import('./pages/Workshops'));
-const Accommodation = lazy(() => import('./pages/Accommodation'));
+const Qrs = lazy(() => import('./pages/Accommodation'));
 const Auth = lazy(() => import('./pages/Auth'));
 const Sponsors = lazy(() => import('./pages/Sponsors'));
 const Team = lazy(() => import('./pages/Team'));
@@ -24,7 +24,8 @@ export default function AppRoutes({ location }) {
       <Route path="/events" element={<Events />} />
       <Route path="/events/:id" element={<EventDetail />} />
       <Route path="/workshops" element={<Workshops />} />
-      <Route path="/accommodation" element={<Accommodation />} />
+      <Route path="/qrs" element={<Qrs />} />
+      <Route path="/accommodation" element={<Navigate to="/qrs" replace />} />
       <Route path="/sponsors" element={<Sponsors />} />
       <Route path="/team" element={<Team />} />
       <Route path="/campus-ambassador" element={<CampusAmbassador />} />
