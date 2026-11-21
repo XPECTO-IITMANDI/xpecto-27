@@ -28,6 +28,7 @@ pub struct CurrentUser {
     pub email: String,
     pub phone: String,
     pub college: String,
+    pub state: String,
     pub role: String,
 }
 
@@ -75,6 +76,7 @@ pub async fn auth_middleware(State(state): State<crate::middleware::AppState>, m
                                 email: doc.get_str("email").unwrap_or("").to_string(),
                                 phone: doc.get_str("phone").unwrap_or("").to_string(),
                                 college: doc.get_str("college").unwrap_or("").to_string(),
+                                state: doc.get_str("state").unwrap_or("").to_string(),
                                 role,
                             })
                         }

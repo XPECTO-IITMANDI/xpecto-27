@@ -13,6 +13,8 @@ pub struct User {
     pub email: String,
     pub phone: String,
     pub college: String,
+    #[serde(default)]
+    pub state: String,
     #[serde(alias = "password_hash")]
     pub password_hash: String,
     pub role: String,
@@ -44,6 +46,8 @@ pub struct SignupInput {
     pub phone: String,
     #[validate(length(min = 1, message = "Enter your college."))]
     pub college: String,
+    #[validate(length(min = 1, message = "Enter your institution state."))]
+    pub state: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -60,6 +64,7 @@ pub struct UserView {
     pub email: String,
     pub phone: String,
     pub college: String,
+    pub state: String,
     pub role: String,
 }
 
@@ -71,6 +76,7 @@ impl User {
             email: self.email.clone(),
             phone: self.phone.clone(),
             college: self.college.clone(),
+            state: self.state.clone(),
             role: self.role.clone(),
         }
     }

@@ -64,7 +64,7 @@ const unwrapMess = v => toObject(v?.mess ?? v);
 const unwrapReg = v => toObject(v?.registration ?? v);
 const unwrapAdmins = v => Array.isArray(v?.admins) ? v.admins : toList(v);
 
-const normUser = u => { const o = toObject(u); return { ...o, id: o.id, name: str(o.name), email: str(o.email), phone: str(o.phone), college: str(o.college), role: o.role === 'admin' ? 'admin' : 'user' }; };
+const normUser = u => { const o = toObject(u); return { ...o, id: o.id, name: str(o.name), email: str(o.email), phone: str(o.phone), college: str(o.college), state: str(o.state), role: o.role === 'admin' ? 'admin' : 'user' }; };
 const normFest = f => { const o = toObject(f); return { ...o, name: str(o.name), tagline: str(o.tagline), startDate: iso(o.startDate), endDate: iso(o.endDate), venue: str(o.venue), aboutHtml: str(o.aboutHtml), heroImageUrl: str(o.heroImageUrl), contactEmail: str(o.contactEmail), contactPhone: str(o.contactPhone) }; };
 const normEvent = e => {
   const o = toObject(e), c = toObject(o.contact);

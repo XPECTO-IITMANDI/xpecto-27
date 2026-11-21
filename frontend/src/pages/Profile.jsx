@@ -9,7 +9,7 @@ import MessList from '../components/MessList';
 import ErrorState from '../components/ErrorState';
 import { capitalize, fmtDate, fmtMoney } from '../utils';
 
-const DETAILS = [['Name', 'name'], ['Email', 'email'], ['Phone', 'phone'], ['College', 'college']];
+const DETAILS = [['Name', 'name'], ['Email', 'email'], ['Phone', 'phone'], ['Institution State', 'state'], ['Institution', 'college']];
 
 function RegGroup({ title, items }) {
   if (!items.length) return null;

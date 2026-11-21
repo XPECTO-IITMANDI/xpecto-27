@@ -409,7 +409,10 @@ pub async fn admin_export_csv(
     let svc = RegistrationService::new(state.db.clone());
     let csv = svc.export_csv().await?;
     Ok((
-        [(header::CONTENT_TYPE, "text/csv; charset=utf-8")],
+        [
+            (header::CONTENT_TYPE, "text/csv; charset=utf-8"),
+            (header::CONTENT_DISPOSITION, "attachment; filename=\"registrations.csv\""),
+        ],
         csv,
     )
         .into_response())

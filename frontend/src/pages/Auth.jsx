@@ -3,16 +3,16 @@ import { Navigate, useLocation, useNavigate } from 'react-router';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import GlitchText from '../components/GlitchText';
+import { INDIA_STATES, INSTITUTIONS_BY_STATE } from '../data/institutions';
 
 const FIELDS = {
   name: { label: 'Full name', type: 'text', auto: 'name' },
   email: { label: 'Email', type: 'email', auto: 'email' },
   password: { label: 'Password', type: 'password' },
   phone: { label: 'Phone (10 digits)', type: 'tel', auto: 'tel' },
-  college: { label: 'College', type: 'text', auto: 'organization' },
 };
-const MODES = { login: ['email', 'password'], signup: ['name', 'email', 'password', 'phone', 'college'] };
-const empty = { name: '', email: '', password: '', phone: '', college: '' };
+const MODES = { login: ['email', 'password'], signup: ['name', 'email', 'password', 'phone'] };
+const empty = { name: '', email: '', password: '', phone: '', state: '', college: '' };
 
 /** Returns { field: message } for the fields shown in this mode. */
 function validate(mode, v) {
@@ -22,7 +22,8 @@ function validate(mode, v) {
   if (v.password.length < (mode === 'signup' ? 8 : 1)) e.password = mode === 'signup' ? 'Use at least 8 characters.' : 'Enter your password.';
   if (mode === 'signup') {
     if (!/^\d{10}$/.test(v.phone.replace(/[\s+-]/g, '').slice(-10)) ) e.phone = 'Enter a 10-digit phone number.';
-    if (!v.college.trim()) e.college = 'Enter your college.';
+    if (!v.state) e.state = 'Select your institution state.';
+    if (!v.college.trim() || v.college === '__other__' && !otherInstitution.trim()) e.college = 'Enter your college.';
   }
   return e;
 }
@@ -37,11 +38,12 @@ export default function Auth() {
   const [server, setServer] = useState('');
   const [busy, setBusy] = useState(false);
   const [show, setShow] = useState(false);
+  const [otherInstitution, setOtherInstitution] = useState('');
   const tabs = useRef([]);
 
   if (user) return <Navigate to={from} replace />; // already signed in
 
-  const switchMode = m => { setMode(m); setErrs({}); setServer(''); };
+  const switchMode = m => { setMode(m); setErrs({}); setServer(''); setOtherInstitution(''); };
   const onTabKey = (e, i) => { // arrow-key tab navigation
     if (!['ArrowLeft', 'ArrowRight'].includes(e.key)) return;
     const n = (i + 1) % 2; switchMode(Object.keys(MODES)[n]); tabs.current[n]?.focus();
@@ -53,7 +55,14 @@ export default function Auth() {
     setBusy(true);
     try {
       if (mode === 'login') await login({ email: v.email.trim(), password: v.password });
-      else await signup({ ...v, name: v.name.trim(), email: v.email.trim(), college: v.college.trim() });
+      else await signup({
+        ...v,
+        name: v.name.trim(),
+        email: v.email.trim(),
+        phone: v.phone.trim(),
+        state: v.state,
+        college: (v.college === '__other__' ? otherInstitution : v.college).trim(),
+      });
       toast.success(mode === 'login' ? 'Welcome back!' : 'Account created!');
       navigate(from, { replace: true }); // back to the event/workshop they came from
     } catch (x) {
@@ -72,6 +81,51 @@ export default function Auth() {
           ))}
         </div>
         <form id="auth-panel" role="tabpanel" aria-labelledby={`tab-${mode}`} onSubmit={submit} noValidate>
+          {mode === 'signup' && (
+            <>
+              <div className="field">
+                <label htmlFor="institution-state">Institution state / UT</label>
+                <select
+                  id="institution-state"
+                  value={v.state}
+                  onChange={e => { setV({ ...v, state: e.target.value, college: '' }); setOtherInstitution(''); }}
+                  aria-invalid={!!errs.state}
+                >
+                  <option value="">Select state or union territory</option>
+                  {INDIA_STATES.map(state => <option key={state} value={state}>{state}</option>)}
+                </select>
+                {errs.state && <span className="err" role="alert">{errs.state}</span>}
+              </div>
+              <div className="field">
+                <label htmlFor="institution-name">Institution name</label>
+                <select
+                  id="institution-name"
+                  value={v.college}
+                  onChange={e => setV({ ...v, college: e.target.value })}
+                  disabled={!v.state}
+                  aria-invalid={!!errs.college}
+                >
+                  <option value="">
+                    {v.state ? 'Select institution' : 'Select a state first'}
+                  </option>
+                  {(INSTITUTIONS_BY_STATE[v.state] || []).map(college => (
+                    <option key={college} value={college}>{college}</option>
+                  ))}
+                  <option value="__other__">Other institution</option>
+                </select>
+                {v.college === '__other__' && (
+                  <input
+                    type="text"
+                    value={otherInstitution}
+                    onChange={e => setOtherInstitution(e.target.value)}
+                    placeholder="Enter institution name"
+                    autoComplete="organization"
+                  />
+                )}
+                {errs.college && <span className="err" role="alert">{errs.college}</span>}
+              </div>
+            </>
+          )}
           {MODES[mode].map(k => (
             <div className="field" key={k}>
               <label htmlFor={`f-${k}`}>{FIELDS[k].label}</label>

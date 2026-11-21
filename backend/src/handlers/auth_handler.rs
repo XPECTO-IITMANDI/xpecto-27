@@ -66,6 +66,7 @@ pub async fn me(
         "email": current_user.email,
         "phone": current_user.phone,
         "college": current_user.college,
+        "state": current_user.state,
         "role": current_user.role,
     } })))
 }

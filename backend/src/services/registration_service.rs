@@ -639,8 +639,7 @@ impl RegistrationService {
     }
 
     pub async fn export_csv(&self) -> AppResult<String> {
-        let mut rows = Vec::new();
-        rows.push("id,email,kind,target,transactionId,amount,status".to_string());
+        let mut rows: Vec<(String, String)> = Vec::new();
         for c in [
             &self.db.event_registrations,
             &self.db.workshop_registrations,
@@ -666,20 +665,69 @@ impl RegistrationService {
                 .and_then(|u| u.get_str("email").ok())
                 .unwrap_or("")
                 .to_string();
+            let participant_name = user
+                .as_ref()
+                .and_then(|u| u.get_str("name").ok())
+                .unwrap_or("")
+                .to_string();
+            let phone = user
+                .as_ref()
+                .and_then(|u| u.get_str("phone").ok())
+                .unwrap_or("")
+                .to_string();
+            let college = user
+                .as_ref()
+                .and_then(|u| u.get_str("college").ok())
+                .unwrap_or("")
+                .to_string();
             let target = if reg.kind == "mess" {
                 reg.mess_name.clone()
             } else {
                 reg.target_name.clone()
             };
             let id = reg.id.map(|o| o.to_hex()).unwrap_or_default();
-            rows.push(format!(
-                "{},{},{},{},{},{},{}",
-                id, email, reg.kind, target, reg.transaction_id, reg.amount, reg.status
-            ));
+            let team_members = reg
+                .team_members
+                .iter()
+                .map(|member| member.name.as_str())
+                .collect::<Vec<_>>()
+                .join("; ");
+            let row = [
+                id,
+                participant_name,
+                email,
+                phone,
+                college,
+                reg.kind.clone(),
+                target.clone(),
+                reg.transaction_id.clone(),
+                reg.amount.to_string(),
+                reg.payment_method.clone(),
+                reg.status.clone(),
+                reg.created_at.map(|date| date.to_rfc3339_string()).unwrap_or_default(),
+                reg.team_name.unwrap_or_default(),
+                team_members,
+                reg.screenshot_url.clone(),
+            ]
+            .into_iter()
+            .map(|value| csv_cell(&value))
+            .collect::<Vec<_>>()
+            .join(",");
+            rows.push((format!("{}:{}", reg.kind, target.to_lowercase()), row));
         }
         }
-        Ok(rows.join("\n"))
+        rows.sort_by(|left, right| left.0.cmp(&right.0));
+        let mut csv = vec![
+            "registration_id,participant_name,email,phone,college,registration_type,event_or_option,transaction_number,amount,payment_method,status,registered_at,team_name,team_members,payment_proof_url".to_string(),
+        ];
+        csv.extend(rows.into_iter().map(|(_, row)| row));
+        Ok(csv.join("\n"))
     }
+}
+
+fn csv_cell(value: &str) -> String {
+    let escaped = value.replace('"', "\"\"");
+    format!("\"{}\"", escaped)
 }
 
 fn is_duplicate_key(e: &mongodb::error::Error) -> bool {
